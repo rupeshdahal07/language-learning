@@ -1,0 +1,217 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="max-w-4xl mx-auto bg-white/90 backdrop-blur-sm rounded-3xl shadow-2xl p-8">
+        <h1 class="text-4xl font-bold text-center bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-8">
+            Match the Following
+        </h1>
+        
+        {% if success %}
+            <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
+                {{ success }}
+            </div>
+        {% endif %}
+        
+        {% if error %}
+            <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+                {{ error }}
+            </div>
+        {% endif %}
+        
+        <form id="matchForm" method="POST" action="{% url 'match_the_following' %}" class="space-y-6">
+            {% csrf_token %}
+
+            <div>
+                <div class="flex items-center justify-between mb-4">
+                    <label class="block text-sm font-semibold text-gray-700">
+                         Japanese Matching Pairs - Nepali
+                    </label>
+                    <button 
+                        type="button" 
+                        id="addPairBtn"
+                        class="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors duration-200 text-sm font-medium"
+                    >
+                        + Add Pair
+                    </button>
+                </div>
+                
+                <div id="pairsContainer" class="space-y-4">
+                    <!-- Initial pairs will be added by JavaScript -->
+                </div>
+            </div>
+
+            <div class="bg-gray-50 rounded-xl p-6">
+                <h3 class="text-lg font-semibold text-gray-700 mb-4">Preview</h3>
+                <div id="previewContainer" class="grid md:grid-cols-2 gap-6">
+                    <div>
+                        <h4 class="font-medium text-gray-700 mb-3">Japanese</h4>
+                        <div id="previewJapaneseItems" class="space-y-2">
+                            <!-- Preview items will be populated by JavaScript -->
+                        </div>
+                    </div>
+                    <div>
+                        <h4 class="font-medium text-gray-700 mb-3">Nepali</h4>
+                        <div id="previewNepaliItems" class="space-y-2">
+                            <!-- Preview items will be populated by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <button 
+                type="submit" 
+                class="w-full bg-gradient-to-r from-green-500 to-blue-600 text-white font-bold py-4 px-6 rounded-xl hover:from-green-600 hover:to-blue-700 transform hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl"
+            >
+                Create Match Exercise
+            </button>
+        </form>
+        {% include "unicode.html" %}
+    </div>
+</div>
+
+<script>
+let pairCount = 0;
+
+function createPairElement(index) {
+    return `
+        <div class="pair-row bg-white rounded-lg border-2 border-gray-200 p-4" data-index="${index}">
+            <div class="flex items-center space-x-4">
+                <span class="text-sm font-medium text-gray-500 w-8">${index + 1}.</span>
+                <div class="flex-1 grid md:grid-cols-2 gap-4">
+                    <input 
+                        type="text" 
+                        name="japanese_${index}" 
+                        required
+                        class="japanese-input px-3 py-2 border border-gray-300 rounded-lg focus:border-green-500 focus:ring-2 focus:ring-green-100 transition-all duration-200 outline-none"
+                        placeholder="Japanese text"
+                    >
+                    <input 
+                        type="text" 
+                        name="nepali_${index}" 
+                        required
+                        class="nepali-input px-3 py-2 border border-gray-300 rounded-lg focus:border-green-500 focus:ring-2 focus:ring-green-100 transition-all duration-200 outline-none"
+                        placeholder="Nepali or Romaji text"
+                    >
+                </div>
+                <button 
+                    type="button" 
+                    class="remove-pair text-red-500 hover:text-red-700 transition-colors duration-200 p-1"
+                    onclick="removePair(${index})"
+                    ${index < 2 ? 'style="visibility: hidden;"' : ''}
+                >
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    `;
+}
+
+function addPair() {
+    const container = document.getElementById('pairsContainer');
+    const newPairHTML = createPairElement(pairCount);
+    container.insertAdjacentHTML('beforeend', newPairHTML);
+    pairCount++;
+    updatePreview();
+    
+    // Add event listeners to new inputs
+    const newRow = container.lastElementChild;
+    newRow.querySelectorAll('input').forEach(input => {
+        input.addEventListener('input', updatePreview);
+    });
+}
+
+function removePair(index) {
+    const pairRow = document.querySelector(`[data-index="${index}"]`);
+    if (pairRow) {
+        pairRow.remove();
+        updatePreview();
+    }
+}
+
+function updatePreview() {
+    const japaneseItems = document.getElementById('previewJapaneseItems');
+    const nepaliItems = document.getElementById('previewNepaliItems');
+    
+    japaneseItems.innerHTML = '';
+    nepaliItems.innerHTML = '';
+    
+    document.querySelectorAll('.pair-row').forEach((row, index) => {
+        const japaneseValue = row.querySelector('.japanese-input').value || `Japanese ${index + 1}`;
+        const nepaliValue = row.querySelector('.nepali-input').value || `Nepali ${index + 1}`;
+        
+        japaneseItems.innerHTML += `<div class="bg-green-100 px-3 py-2 rounded-lg text-sm">${japaneseValue}</div>`;
+        nepaliItems.innerHTML += `<div class="bg-blue-100 px-3 py-2 rounded-lg text-sm">${nepaliValue}</div>`;
+    });
+}
+
+// Initialize form
+document.addEventListener('DOMContentLoaded', function() {
+    // Add initial 3 empty pairs
+    for (let i = 0; i < 3; i++) {
+        addPair();
+    }
+    
+    // Add event listeners
+    document.getElementById('addPairBtn').addEventListener('click', addPair);
+    
+    // Add event listeners to existing inputs
+    document.querySelectorAll('.nepali-input, .japanese-input').forEach(input => {
+        input.addEventListener('input', updatePreview);
+    });
+    
+    updatePreview();
+});
+
+// Form validation
+document.getElementById('matchForm').addEventListener('submit', function(e) {
+    const pairs = document.querySelectorAll('.pair-row');
+    let hasValidPair = false;
+    
+    pairs.forEach(row => {
+        const nepaliInput = row.querySelector('.nepali-input');
+        const japaneseInput = row.querySelector('.japanese-input');
+        
+        if (nepaliInput.value.trim() && japaneseInput.value.trim()) {
+            hasValidPair = true;
+        }
+    });
+    
+    if (!hasValidPair) {
+        e.preventDefault();
+        alert('Please add at least one complete matching pair.');
+        return false;
+    }
+});
+</script>
+
+<style>
+.pair-row {
+    transition: all 0.3s ease;
+}
+
+.pair-row:hover {
+    border-color: #10b981;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.15);
+}
+
+.remove-pair:hover svg {
+    transform: scale(1.1);
+}
+
+#previewContainer {
+    min-height: 200px;
+}
+
+.bg-blue-100 {
+    background-color: #dbeafe;
+    color: #1e40af;
+}
+
+.bg-green-100 {
+    background-color: #dcfce7;
+    color: #166534;
+}
+</style>
+{% endblock content %}

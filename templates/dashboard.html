@@ -1,0 +1,294 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50">
+    <div class="container mx-auto px-4 py-8">
+        <!-- Welcome Header -->
+        <div class="mb-8">
+            <div class="bg-white/80 backdrop-blur-sm rounded-3xl shadow-2xl p-8">
+                <div class="text-center">
+                    <h1 class="text-5xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent mb-4">
+                        Dashboard
+                    </h1>
+                    <p class="text-lg text-gray-600 max-w-2xl mx-auto">
+                        Manage quiz questions, word formation levels, and users all in one place. 
+                        
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Error Message -->
+        {% if error %}
+            <div class="bg-red-100 border border-red-400 text-red-700 px-6 py-4 rounded-2xl mb-8">
+                <div class="flex items-center space-x-2">
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                    </svg>
+                    <span>{{ error }}</span>
+                </div>
+            </div>
+        {% endif %}
+
+        <!-- Statistics Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
+            <!-- Fill Blank Quizzes -->
+            <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl shadow-xl text-white p-6 transform hover:scale-105 transition-all duration-300">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-blue-100 text-sm font-medium">Fill Blank Questions</p>
+                        <p class="text-3xl font-bold">{{ stats.fill_blanks_count }}</p>
+                    </div>
+                    <div class="bg-white/20 rounded-full p-3">
+                        <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clip-rule="evenodd"></path>
+                        </svg>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <a href="{% url 'list_fill_blanks' %}" class="text-blue-100 hover:text-white text-sm font-medium">
+                        View All →
+                    </a>
+                </div>
+            </div>
+
+            <!-- Regular Quiz Questions -->
+            <div class="bg-gradient-to-br from-green-500 to-green-600 rounded-2xl shadow-xl text-white p-6 transform hover:scale-105 transition-all duration-300">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-green-100 text-sm font-medium">Quiz Questions</p>
+                        <p class="text-3xl font-bold">{{ stats.quiz_count }}</p>
+                    </div>
+                    <div class="bg-white/20 rounded-full p-3">
+                        <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
+                        </svg>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <a href="{% url 'list_quiz_questions' %}" class="text-green-100 hover:text-white text-sm font-medium">
+                        View All →
+                    </a>
+                </div>
+            </div>
+            <!-- Match the Following -->
+            <div class="bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-2xl shadow-xl text-white p-6 transform hover:scale-105 transition-all duration-300">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-yellow-100 text-sm font-medium">Match the Following</p>
+                        <p class="text-3xl font-bold">{{ stats.match_following_count }}</p>
+                    </div>
+                    <div class="bg-white/20 rounded-full p-3">
+                        <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M7 7a1 1 0 011-1h4a1 1 0 110 2H8a1 1 0 01-1-1zm-2 4a1 1 0 100 2h10a1 1 0 100-2H5zm2 4a1 1 0 011-1h4a1 1 0 110 2H8a1 1 0 01-1-1z" clip-rule="evenodd"></path>
+                        </svg>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <a href="{% url 'quiz' %}" class="text-yellow-100 hover:text-white text-sm font-medium">
+                        View All →
+                    </a>
+                </div>
+            </div>
+            <!-- Word Form Levels -->
+            <div class="bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl shadow-xl text-white p-6 transform hover:scale-105 transition-all duration-300">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-purple-100 text-sm font-medium">Word Form Levels</p>
+                        <p class="text-3xl font-bold">{{ stats.word_form_count }}</p>
+                    </div>
+                    <div class="bg-white/20 rounded-full p-3">
+                        <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M12.316 3.051a1 1 0 01.633 1.265l-4 12a1 1 0 11-1.898-.632l4-12a1 1 0 011.265-.633zM5.707 6.293a1 1 0 010 1.414L3.414 10l2.293 2.293a1 1 0 11-1.414 1.414l-3-3a1 1 0 010-1.414l3-3a1 1 0 011.414 0zm8.586 0a1 1 0 011.414 0l3 3a1 1 0 010 1.414l-3 3a1 1 0 11-1.414-1.414L16.586 10l-2.293-2.293a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+                        </svg>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <a href="{% url 'list_word_form' %}" class="text-purple-100 hover:text-white text-sm font-medium">
+                        View All →
+                    </a>
+                </div>
+            </div>
+
+            <!-- Users -->
+            <div class="bg-gradient-to-br from-pink-500 to-pink-600 rounded-2xl shadow-xl text-white p-6 transform hover:scale-105 transition-all duration-300">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-pink-100 text-sm font-medium">Registered Users</p>
+                        <p class="text-3xl font-bold">{{ stats.users_count }}</p>
+                    </div>
+                    <div class="bg-white/20 rounded-full p-3">
+                        <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z"></path>
+                        </svg>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <a href="{% url 'users' %}" class="text-pink-100 hover:text-white text-sm font-medium">
+                        View All →
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+            <!-- Create New Items -->
+            <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl p-6">
+                <h3 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
+                    <svg class="w-6 h-6 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                    </svg>
+                    Quick Actions
+                </h3>
+                <div class="grid grid-cols-2 gap-4">
+                    <a href="{% url 'fill_blank' %}" class="group bg-gradient-to-r from-blue-500 to-blue-600 text-white p-4 rounded-xl hover:from-blue-600 hover:to-blue-700 transition-all duration-200 transform hover:scale-105">
+                        <div class="text-center">
+                            <svg class="w-8 h-8 mx-auto mb-2 opacity-90 group-hover:opacity-100" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd"></path>
+                            </svg>
+                            <p class="font-semibold text-sm">Fill Blank Quiz</p>
+                        </div>
+                    </a>
+                    <a href="{% url 'quiz' %}" class="group bg-gradient-to-r from-green-500 to-green-600 text-white p-4 rounded-xl hover:from-green-600 hover:to-green-700 transition-all duration-200 transform hover:scale-105">
+                        <div class="text-center">
+                            <svg class="w-8 h-8 mx-auto mb-2 opacity-90 group-hover:opacity-100" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a.75.75 0 000 1.5h.253a.25.25 0 01.244.304l-.459 2.066A1.75 1.75 0 0010.747 15H11a.75.75 0 000-1.5h-.253a.25.25 0 01-.244-.304l.459-2.066A1.75 1.75 0 009.253 9H9z" clip-rule="evenodd"></path>
+                            </svg>
+                            <p class="font-semibold text-sm">Quiz Question</p>
+                        </div>
+                    </a>
+                    <a href="{% url 'create_word_from_level' %}" class="group bg-gradient-to-r from-purple-500 to-purple-600 text-white p-4 rounded-xl hover:from-purple-600 hover:to-purple-700 transition-all duration-200 transform hover:scale-105">
+                        <div class="text-center">
+                            <svg class="w-8 h-8 mx-auto mb-2 opacity-90 group-hover:opacity-100" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M12.316 3.051a1 1 0 01.633 1.265l-4 12a1 1 0 11-1.898-.632l4-12a1 1 0 011.265-.633z" clip-rule="evenodd"></path>
+                            </svg>
+                            <p class="font-semibold text-sm">Word Form Level</p>
+                        </div>
+                    </a>
+                    <a href="{% url 'create_user' %}" class="group bg-gradient-to-r from-pink-500 to-pink-600 text-white p-4 rounded-xl hover:from-pink-600 hover:to-pink-700 transition-all duration-200 transform hover:scale-105">
+                        <div class="text-center">
+                            <svg class="w-8 h-8 mx-auto mb-2 opacity-90 group-hover:opacity-100" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M8 9a3 3 0 100-6 3 3 0 000 6zM8 11a6 6 0 016 6H2a6 6 0 016-6zM16 7a1 1 0 10-2 0v1h-1a1 1 0 100 2h1v1a1 1 0 102 0v-1h1a1 1 0 100-2h-1V7z"></path>
+                            </svg>
+                            <p class="font-semibold text-sm">New User</p>
+                        </div>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Recent Activity -->
+            <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl p-6">
+                <h3 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
+                    <svg class="w-6 h-6 mr-2 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    Recent Activity
+                </h3>
+                <div class="space-y-4 max-h-64 overflow-y-auto">
+                    {% if recent_items.users %}
+                        {% for user in recent_items.users %}
+                            <div class="flex items-center space-x-3 p-3 bg-pink-50 rounded-lg">
+                                <div class="w-2 h-2 bg-pink-500 rounded-full"></div>
+                                <div class="flex-1">
+                                    <p class="text-sm text-gray-800">New user: <span class="font-semibold">{{ user.display_name|default:user.email }}</span></p>
+                                    {% if user.created_at %}
+                                        <p class="text-xs text-gray-500">{{ user.created_at}} ago</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                    {% if recent_items.match_following %}
+                        {% for match in recent_items.match_following %}
+                            <div class="flex items-center space-x-3 p-3 bg-yellow-50 rounded-lg">
+                                <div class="w-2 h-2 bg-yellow-500 rounded-full"></div>
+                                <div class="flex-1">
+                                    <p class="text-sm text-gray-800">Match the Following Created: ID no.<span class="font-semibold">{{ match.id }}</span></p> 
+                                    {% if match.created_at %}
+                                        <p class="text-xs text-gray-500">{{ match.created_at}} ago</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+
+                    {% if recent_items.fill_blanks %}
+                        {% for item in recent_items.fill_blanks %}
+                            <div class="flex items-center space-x-3 p-3 bg-blue-50 rounded-lg">
+                                <div class="w-2 h-2 bg-blue-500 rounded-full"></div>
+                                <div class="flex-1">
+                                    <p class="text-sm text-gray-800">Fill blank created: <span class="font-semibold">{{ item.letter_info.title|default:"Question" }}</span></p>
+                                    {% if item.created_at %}
+                                        <p class="text-xs text-gray-500">{{ item.created_at }} ago</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+
+                    {% if recent_items.quiz %}
+                        {% for quiz in recent_items.quiz %}
+                            <div class="flex items-center space-x-3 p-3 bg-green-50 rounded-lg">
+                                <div class="w-2 h-2 bg-green-500 rounded-full"></div>
+                                <div class="flex-1">
+                                    <p class="text-sm text-gray-800">Quiz created: <span class="font-semibold">{{ quiz.data.questionText|truncatechars:30 }}</span></p>
+                                    {% if quiz.created_at %}
+                                        <p class="text-xs text-gray-500">{{ quiz.created_at }} ago</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+
+                    {% if not recent_items.users and not recent_items.fill_blanks and not recent_items.quiz and not recent_items.word_forms %}
+                        <div class="text-center py-8 text-gray-500">
+                            <svg class="w-12 h-12 mx-auto mb-2 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            <p>No recent activity</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Navigation Links -->
+        <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl p-6">
+            <h3 class="text-2xl font-bold text-gray-800 mb-6 text-center">Manage Your Content</h3>
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                <a href="{% url 'list_fill_blanks' %}" class="group text-center p-6 bg-blue-50 hover:bg-blue-100 rounded-xl transition-all duration-200">
+                    <svg class="w-12 h-12 mx-auto mb-3 text-blue-600 group-hover:scale-110 transition-transform duration-200" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clip-rule="evenodd"></path>
+                    </svg>
+                    <h4 class="font-semibold text-gray-800">Fill Blank Quizzes</h4>
+                    <p class="text-sm text-gray-600 mt-1">Manage fill-in-the-blank questions</p>
+                </a>
+
+                <a href="{% url 'list_quiz_questions' %}" class="group text-center p-6 bg-green-50 hover:bg-green-100 rounded-xl transition-all duration-200">
+                    <svg class="w-12 h-12 mx-auto mb-3 text-green-600 group-hover:scale-110 transition-transform duration-200" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
+                    </svg>
+                    <h4 class="font-semibold text-gray-800">Quiz Questions</h4>
+                    <p class="text-sm text-gray-600 mt-1">Manage multiple choice questions</p>
+                </a>
+
+                <a href="{% url 'list_word_form' %}" class="group text-center p-6 bg-purple-50 hover:bg-purple-100 rounded-xl transition-all duration-200">
+                    <svg class="w-12 h-12 mx-auto mb-3 text-purple-600 group-hover:scale-110 transition-transform duration-200" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M12.316 3.051a1 1 0 01.633 1.265l-4 12a1 1 0 11-1.898-.632l4-12a1 1 0 011.265-.633zM5.707 6.293a1 1 0 010 1.414L3.414 10l2.293 2.293a1 1 0 11-1.414 1.414l-3-3a1 1 0 010-1.414l3-3a1 1 0 011.414 0zm8.586 0a1 1 0 011.414 0l3 3a1 1 0 010 1.414l-3 3a1 1 0 11-1.414-1.414L16.586 10l-2.293-2.293a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+                    </svg>
+                    <h4 class="font-semibold text-gray-800">Word Form Levels</h4>
+                    <p class="text-sm text-gray-600 mt-1">Manage word formation puzzles</p>
+                </a>
+
+                <a href="{% url 'list_users' %}" class="group text-center p-6 bg-pink-50 hover:bg-pink-100 rounded-xl transition-all duration-200">
+                    <svg class="w-12 h-12 mx-auto mb-3 text-pink-600 group-hover:scale-110 transition-transform duration-200" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z"></path>
+                    </svg>
+                    <h4 class="font-semibold text-gray-800">Users</h4>
+                    <p class="text-sm text-gray-600 mt-1">Manage registered users</p>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}

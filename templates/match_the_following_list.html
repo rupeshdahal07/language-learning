@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="max-w-6xl mx-auto">
+        <!-- Header -->
+        <div class="bg-white/90 backdrop-blur-sm rounded-3xl shadow-2xl p-8 mb-6">
+            <h1 class="text-4xl font-bold text-center bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-4">
+                Match the Following Exercises
+            </h1>
+            {% if total_count %}
+                <p class="text-center text-gray-600">Total Exercises: {{ total_count.count|default:total_count }}</p>
+            {% endif %}
+            <div class="text-center mt-4">
+                <a href="{% url 'match_the_following' %}" 
+                   class="inline-block bg-gradient-to-r from-green-500 to-blue-600 text-white font-bold py-3 px-6 rounded-xl hover:from-green-600 hover:to-blue-700 transform hover:scale-105 transition-all duration-200 shadow-lg">
+                    Add New Exercise
+                </a>
+            </div>
+        </div>
+
+        <!-- Error Message -->
+        {% if error %}
+            <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-xl mb-6">
+                {{ error }}
+            </div>
+        {% endif %}
+
+        <!-- Exercises List -->
+        {% if match_following_levels %}
+            <div class="space-y-6">
+                {% for exercise in match_following_levels %}
+                    <div class="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl p-6 hover:shadow-2xl transition-shadow duration-300">
+                        <div class="flex justify-between items-start mb-2">
+                            <h3 class="text-xl font-semibold text-gray-800">
+                                Exercise #{{ forloop.counter }}
+                            </h3>
+                            {% if exercise.id %}
+                                <span class="text-sm text-gray-500 bg-gray-100 px-2 py-1 rounded-lg">
+                                    ID: {{ exercise.id }}
+                                </span>
+                            {% endif %}
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full bg-white border border-gray-200 rounded-lg">
+                                <thead>
+                                    <tr>
+                                        <th class="px-4 py-2 border-b text-left text-blue-700">Nepali</th>
+                                        <th class="px-4 py-2 border-b text-left text-purple-700">Japanese</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for pair in exercise.data %}
+                                        <tr>
+                                            <td class="px-4 py-2 border-b">{{ pair.nepali }}</td>
+                                            <td class="px-4 py-2 border-b">{{ pair.japanese }}</td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% if exercise.created_at %}
+                            <div class="mt-4 text-right text-sm text-gray-500">
+                                Created: {{ exercise.created_at|date:"M d, Y H:i" }}
+                            </div>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="text-center py-12">
+                <div class="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl p-8">
+                    <div class="text-gray-500 mb-4">
+                        <svg class="mx-auto h-16 w-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-medium text-gray-700 mb-2">No Exercises Found</h3>
+                    <p class="text-gray-500 mb-4">Get started by creating your first match the following exercise.</p>
+                    <a href="{% url 'match_the_following' %}" 
+                       class="inline-block bg-gradient-to-r from-blue-500 to-purple-600 text-white font-bold py-3 px-6 rounded-xl hover:from-blue-600 hover:to-purple-700 transform hover:scale-105 transition-all duration-200 shadow-lg">
+                        Create First Exercise
+                    </a>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock content %}

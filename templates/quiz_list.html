@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="max-w-6xl mx-auto">
+        <!-- Header -->
+        <div class="bg-white/90 backdrop-blur-sm rounded-3xl shadow-2xl p-8 mb-6">
+            <h1 class="text-4xl font-bold text-center bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-4">
+                Quiz Questions
+            </h1>
+            {% if total_count %}
+                <p class="text-center text-gray-600">Total Questions: {{ total_count }}</p>
+            {% endif %}
+            
+            <!-- Add New Question Button -->
+            <div class="text-center mt-4">
+                <a href="{% url 'quiz' %}" 
+                   class="inline-block bg-gradient-to-r from-green-500 to-blue-600 text-white font-bold py-3 px-6 rounded-xl hover:from-green-600 hover:to-blue-700 transform hover:scale-105 transition-all duration-200 shadow-lg">
+                    Add New Question
+                </a>
+            </div>
+        </div>
+
+        <!-- Error Message -->
+        {% if error %}
+            <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-xl mb-6">
+                {{ error }}
+            </div>
+        {% endif %}
+
+        <!-- Questions List -->
+        {% if quiz_questions %}
+            <div class="space-y-6">
+                {% for question in quiz_questions %}
+                    <div class="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl p-6 hover:shadow-2xl transition-shadow duration-300">
+                        <!-- Question Header -->
+                        <div class="border-b border-gray-200 pb-4 mb-4">
+                            <div class="flex justify-between items-start mb-2">
+                                <h3 class="text-xl font-semibold text-gray-800">
+                                    Question #{{ forloop.counter }}
+                                </h3>
+                                {% if question.id %}
+                                    <span class="text-sm text-gray-500 bg-gray-100 px-2 py-1 rounded-lg">
+                                        ID: {{ question.id }}
+                                    </span>
+                                {% endif %}
+                            </div>
+                            <p class="text-lg text-gray-700 font-medium">
+                                {{ question.data.questionText }}
+                            </p>
+                        </div>
+
+                        <!-- Options -->
+                        <div class="mb-4">
+                            <h4 class="font-semibold text-gray-700 mb-3">Answer Options:</h4>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                {% for option in question.data.options %}
+                                    <div class="flex items-center space-x-3 p-3 rounded-lg {% if forloop.counter0 == question.data.correctOption %}bg-green-50 border border-green-200{% else %}bg-gray-50 border border-gray-200{% endif %}">
+                                        {% if forloop.counter0 == question.data.correctOption %}
+                                            <div class="flex-shrink-0 w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
+                                                <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                                                </svg>
+                                            </div>
+                                            <div class="flex-1">
+                                                <span class="font-semibold text-green-800">{{ option }}</span>
+                                                <span class="text-sm text-green-600 ml-2">(Correct Answer)</span>
+                                            </div>
+                                        {% else %}
+                                            <div class="flex-shrink-0 w-6 h-6 bg-gray-300 rounded-full flex items-center justify-center">
+                                                <span class="text-xs font-medium text-gray-600">{{ forloop.counter0|add:1 }}</span>
+                                            </div>
+                                            <span class="text-gray-700">{{ option }}</span>
+                                        {% endif %}
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <!-- Quick Stats -->
+                        {% comment %} <div class="bg-blue-50 rounded-xl p-4">
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                                <div class="text-center">
+                                    <span class="block text-blue-600 font-semibold">Options</span>
+                                    <span class="text-gray-700">{{ question.data.options|length }}</span>
+                                </div>
+                                <div class="text-center">
+                                    <span class="block text-blue-600 font-semibold">Correct Answer</span>
+                                    <span class="text-gray-700">Option {{ question.data.correctOption|add:1 }}</span>
+                                </div>
+                                <div class="text-center">
+                                    <span class="block text-blue-600 font-semibold">Answer Text</span>
+                                    <span class="text-gray-700 font-medium">{{ question.data.options|slice:question.data.correctOption }}</span>
+                                </div>
+                            </div>
+                        </div> {% endcomment %}
+
+                        <!-- Metadata -->
+                        {% if question.created_at %}
+                            <div class="mt-4 text-right text-sm text-gray-500">
+                                Created: {{ question.created_at|date:"M d, Y H:i" }}
+                            </div>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="text-center py-12">
+                <div class="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl p-8">
+                    <div class="text-gray-500 mb-4">
+                        <svg class="mx-auto h-16 w-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-medium text-gray-700 mb-2">No Quiz Questions Found</h3>
+                    <p class="text-gray-500 mb-4">Get started by creating your first quiz question.</p>
+                    <a href="{% url 'quiz' %}" 
+                       class="inline-block bg-gradient-to-r from-blue-500 to-purple-600 text-white font-bold py-3 px-6 rounded-xl hover:from-blue-600 hover:to-purple-700 transform hover:scale-105 transition-all duration-200 shadow-lg">
+                        Create First Question
+                    </a>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock content %}

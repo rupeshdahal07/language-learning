@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Japanese Learning - Fill in the Blanks</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Noto Sans JP', 'Yu Gothic', 'Meiryo', 'MS PGothic', sans-serif;
+        }
+        .sidebar-transition { transition: transform 0.3s ease-in-out; }
+        .content-shift { transition: margin-left 0.3s ease-in-out; }
+        .fill-blank { 
+            border-bottom: 2px solid #3B82F6; 
+            background: transparent; 
+            min-width: 120px;
+            text-align: center;
+        }
+        .option-button {
+            transition: all 0.2s ease;
+        }
+        .option-button:hover {
+            transform: translateY(-2px);
+        }
+        .option-used {
+            opacity: 0.3;
+            pointer-events: none;
+        }
+        .nav-link {
+            position: relative;
+            overflow: hidden;
+        }
+        .nav-link::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+        .nav-link:hover::before {
+            left: 100%;
+        }
+        .sidebar-shadow {
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        .hamburger-line {
+            transform-origin: center;
+        }
+        .hamburger-active #line1 {
+            transform: rotate(45deg) translate(6px, 6px);
+        }
+        .hamburger-active #line2 {
+            opacity: 0;
+        }
+        .hamburger-active #line3 {
+            transform: rotate(-45deg) translate(6px, -6px);
+        }
+        #sidebar {
+        scrollbar-width: thin;           /* Firefox */
+        scrollbar-color: #cbd5e1 #fff;   /* Firefox */
+    }
+    #sidebar::-webkit-scrollbar {
+        width: 6px;                      /* Chrome, Safari, Edge */
+    }
+    #sidebar::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 4px;
+    }
+    #sidebar::-webkit-scrollbar-track {
+        background: #fff;
+    }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-blue-50 via-white to-purple-50 min-h-screen">
+    <!-- Sidebar -->
+    <aside id="sidebar" class="fixed left-0 top-0 h-full w-72 bg-white sidebar-shadow z-50 sidebar-transition overflow-y-auto ">
+        <!-- Header -->
+        <div class="p-6 border-b border-gray-100 bg-gradient-to-r from-blue-600 to-purple-600">
+            <div class="flex items-center">
+                
+                <div>
+                    <h2 class="text-xl font-bold text-white">Japanese Learning</h2>
+                    <p class="text-blue-100 text-sm">Fill Form</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Navigation -->
+        <nav class="p-4 pb-10 ">
+            <ul class="space-y-3">
+            <li>
+                <a href="{% url 'dashboard' %}"
+                   class="nav-link flex items-center p-4 rounded-xl
+                   {% if request.resolver_match.url_name == 'dashboard' %}
+                   bg-gradient-to-r from-green-100 to-green-200 text-green-800 shadow-xl
+                   {% else %}
+                   text-gray-700 hover:bg-gradient-to-r hover:from-gray-50 hover:to-gray-100 hover:shadow-md
+                   {% endif %}
+                   transition-all duration-200">
+                <i class="fas fa-home mr-4 text-lg text-blue-500"></i>
+                <span class="font-medium">Dashboard</span>
+                </a>
+            </li>
+            
+            <li>
+                <hr class="my-4 border-gray-200">
+                <div class="text-xs uppercase tracking-widest text-gray-400 px-4 mb-2">Create</div>
+            </li>
+            <li>
+                <a href="{% url 'create_user' %}"
+                   class="nav-link flex items-center p-4 rounded-xl
+                   {% if request.resolver_match.url_name == 'create_user' %}
+                   bg-gradient-to-r from-green-100 to-green-200 text-green-800 shadow-xl
+                   {% else %}
+                   text-gray-700 hover:bg-gradient-to-r hover:from-gray-50 hover:to-gray-100 hover:shadow-md
+                   {% endif %}
+                   transition-all duration-200">
+                <i class="fas fa-user mr-4 text-lg text-purple-500"></i>
+                <span class="font-medium">User Form</span>
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'create_path' %}"
+                   class="nav-link flex items-center p-4 rounded-xl
+                   {% if request.resolver_match.url_name == 'create_path' %}
+                   bg-gradient-to-r from-green-100 to-green-200 text-green-800 shadow-xl
+                   {% else %}
+                   text-gray-700 hover:bg-gradient-to-r hover:from-gray-50 hover:to-gray-100 hover:shadow-md
+                   {% endif %}
+                   transition-all duration-200">
+                <i class="fas fa-chalkboard-teacher mr-4 text-lg text-blue-500"></i>
+                <span class="font-medium">Path Form</span>
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'create_lesson' %}"
+                   class="nav-link flex items-center p-4 rounded-xl
+                   {% if request.resolver_match.url_name == 'create_lesson' %}
+                   bg-gradient-to-r from-green-100 to-green-200 text-green-800 shadow-xl
+                   {% else %}
+                   text-gray-700 hover:bg-gradient-to-r hover:from-gray-50 hover:to-gray-100 hover:shadow-md
+                   {% endif %}
+                   transition-all duration-200">
+                <i class="fas fa-chalkboard-teacher mr-4 text-lg text-blue-500"></i>
+                <span class="font-medium">Lesson Form</span>
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'quiz' %}"
+                   class="nav-link flex items-center p-4 rounded-xl
+                   {% if request.resolver_match.url_name == 'quiz' %}
+                   bg-gradient-to-r from-green-100 to-green-200 text-green-800 shadow-xl
+                   {% else %}
+                   text-gray-700 hover:bg-gradient-to-r hover:from-gray-50 hover:to-gray-100 hover:shadow-md
+                   {% endif %}
+                   transition-all duration-200">
+                <i class="fas fa-edit mr-4 text-lg text-purple-500"></i>
+                <span class="font-medium">Quiz Form</span>
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'match_the_following' %}"
+                   class="nav-link flex items-center p-4 rounded-xl
+                   {% if request.resolver_match.url_name == 'match_the_following' %}
+                   bg-gradient-to-r from-green-100 to-green-200 text-green-800 shadow-xl
+                   {% else %}
+                   text-gray-700 hover:bg-gradient-to-r hover:from-gray-50 hover:to-gray-100 hover:shadow-md
+                   {% endif %}
+                   transition-all duration-200">
+                <i class="fas fa-random mr-4 text-lg text-purple-500"></i>
+                <span class="font-medium">Match The Following</span>
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'fill_blank' %}"
+                   class="nav-link flex items-center p-4 rounded-xl
+                   {% if request.resolver_match.url_name == 'fill_blank' %}
+                   bg-gradient-to-r from-purple-100 to-purple-200 text-purple-800 shadow-xl
+                   {% else %}
+                   text-gray-700 hover:bg-gradient-to-r hover:from-gray-50 hover:to-gray-100 hover:shadow-md
+                   {% endif %}
+                   transition-all duration-200">
+                <i class="fas fa-clipboard-list mr-4 text-lg text-purple-500"></i>
+                <span class="font-medium">Fill Blank</span>
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'create_word_from_level' %}"
+                   class="nav-link flex items-center p-4 rounded-xl
+                   {% if request.resolver_match.url_name == 'create_word_from_level' %}
+                   bg-gradient-to-r from-green-100 to-green-200 text-green-800 shadow-xl
+                   {% else %}
+                   text-gray-700 hover:bg-gradient-to-r hover:from-gray-50 hover:to-gray-100 hover:shadow-md
+                   {% endif %}
+                   transition-all duration-200">
+                <i class="fas fa-book-open mr-4 text-lg text-green-500"></i>
+                <span class="font-medium">Word Form</span>
+                </a>
+            </li>
+
+            <li>
+                <hr class="my-4 border-gray-200">
+                <div class="text-xs uppercase tracking-widest text-gray-400 px-4 mb-2">List</div>
+            </li>
+            <li>
+                <a href="{% url 'users' %}"
+                   class="nav-link flex items-center p-4 rounded-xl
+                   {% if request.resolver_match.url_name == 'users' %}
+                   bg-gradient-to-r from-green-100 to-green-200 text-green-800 shadow-xl
+                   {% else %}
+                   text-gray-700 hover:bg-gradient-to-r hover:from-gray-50 hover:to-gray-100 hover:shadow-md
+                   {% endif %}
+                   transition-all duration-200">
+                <i class="fas fa-users mr-4 text-lg text-blue-500"></i>
+                <span class="font-medium">User List</span>
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'list_paths' %}"
+                   class="nav-link flex items-center p-4 rounded-xl
+                   {% if request.resolver_match.url_name == 'list_paths' %}
+                   bg-gradient-to-r from-green-100 to-green-200 text-green-800 shadow-xl
+                   {% else %}
+                   text-gray-700 hover:bg-gradient-to-r hover:from-gray-50 hover:to-gray-100 hover:shadow-md
+                   {% endif %}
+                   transition-all duration-200">
+                <i class="fas fa-list-ul mr-4 text-lg text-blue-500"></i>
+                <span class="font-medium">Path List</span>
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'lesson_list' %}"
+                   class="nav-link flex items-center p-4 rounded-xl
+                   {% if request.resolver_match.url_name == 'lesson_list' %}
+                   bg-gradient-to-r from-green-100 to-green-200 text-green-800 shadow-xl
+                   {% else %}
+                   text-gray-700 hover:bg-gradient-to-r hover:from-gray-50 hover:to-gray-100 hover:shadow-md
+                   {% endif %}
+                   transition-all duration-200">
+                <i class="fas fa-list-ul mr-4 text-lg text-blue-500"></i>
+                <span class="font-medium">Lesson List</span>
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'list_quiz_questions' %}"
+                   class="nav-link flex items-center p-4 rounded-xl
+                   {% if request.resolver_match.url_name == 'list_quiz_questions' %}
+                   bg-gradient-to-r from-green-100 to-green-200 text-green-800 shadow-xl
+                   {% else %}
+                   text-gray-700 hover:bg-gradient-to-r hover:from-gray-50 hover:to-gray-100 hover:shadow-md
+                   {% endif %}
+                   transition-all duration-200">
+                <i class="fas fa-list-ul mr-4 text-lg text-blue-500"></i>
+                <span class="font-medium">Quiz List</span>
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'match_the_following_list' %}"
+                   class="nav-link flex items-center p-4 rounded-xl
+                   {% if request.resolver_match.url_name == 'match_the_following_list' %}
+                   bg-gradient-to-r from-green-100 to-green-200 text-green-800 shadow-xl
+                   {% else %}
+                   text-gray-700 hover:bg-gradient-to-r hover:from-gray-50 hover:to-gray-100 hover:shadow-md
+                   {% endif %}
+                   transition-all duration-200">
+                <i class="fas fa-list-ul mr-4 text-lg text-blue-500"></i>
+                <span class="font-medium">Match Following List</span>
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'list_fill_blanks' %}"
+                   class="nav-link flex items-center p-4 rounded-xl
+                   {% if request.resolver_match.url_name == 'list_fill_blanks' %}
+                   bg-gradient-to-r from-green-100 to-green-200 text-green-800 shadow-xl
+                   {% else %}
+                   text-gray-700 hover:bg-gradient-to-r hover:from-gray-50 hover:to-gray-100 hover:shadow-md
+                   {% endif %}
+                   transition-all duration-200">
+                <i class="fas fa-list-ul mr-4 text-lg text-blue-500"></i>
+                <span class="font-medium">Fill Blank List</span>
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'list_word_form' %}"
+                   class="nav-link flex items-center p-4 rounded-xl
+                   {% if request.resolver_match.url_name == 'list_word_form' %}
+                   bg-gradient-to-r from-green-100 to-green-200 text-green-800 shadow-xl
+                   {% else %}
+                   text-gray-700 hover:bg-gradient-to-r hover:from-gray-50 hover:to-gray-100 hover:shadow-md
+                   {% endif %}
+                   transition-all duration-200">
+                <i class="fas fa-list-ul mr-4 text-lg text-blue-500"></i>
+                <span class="font-medium">Word Form List</span>
+                </a>
+            </li>
+            {% comment %} <li>
+                <a href="#"
+                   class="nav-link flex items-center p-4 rounded-xl text-gray-700 hover:bg-gradient-to-r hover:from-gray-50 hover:to-gray-100 hover:shadow-md transition-all duration-200">
+                <i class="fas fa-cog mr-4 text-lg text-orange-500"></i>
+                <span class="font-medium">Settings</span>
+                </a>
+            </li> {% endcomment %}
+            </ul>
+        </nav>
+        
+        <!-- Letter Info Panel -->
+        <div class="sticky bottom-0 left-0 right-0 p-4 border-t border-gray-100 bg-gradient-to-r from-gray-50 to-gray-100 z-10">
+            <div class="flex items-center justify-center">
+            <form method="post" action="{% url 'logout' %}">
+                {% csrf_token %}
+                <button type="submit" class="flex items-center px-4 py-2 bg-red-500 text-white rounded-xl shadow hover:bg-red-600 transition">
+                <i class="fas fa-sign-out-alt mr-2"></i>
+                Logout
+                </button>
+            </form>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Sidebar Toggle Button -->
+    {% comment %} <button id="sidebarToggle" class="fixed top-4 left-[15rem] z-50 bg-white shadow-xl rounded-full p-4 hover:shadow-2xl hover:bg-blue-50 transition-all duration-300 group">
+        <div class="w-4 h-4 flex flex-col justify-center items-center">
+            <span class="block w-4 h-0.5 bg-gray-600 mb-1.5 transition-all duration-300 hamburger-line group-hover:bg-blue-600" id="line1"></span>
+            <span class="block w-4 h-0.5 bg-gray-600 mb-1.5 transition-all duration-300 hamburger-line group-hover:bg-blue-600" id="line2"></span>
+            <span class="block w-4 h-0.5 bg-gray-600 transition-all duration-300 hamburger-line group-hover:bg-blue-600" id="line3"></span>
+        </div>
+    </button> {% endcomment %}
+
+    <!-- Main Content -->
+    <main id="mainContent" class="content-shift ml-72 p-8">
+        {% block content %}{% endblock content %}
+    </main>
+
+    <script>
+        // Sidebar toggle functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const sidebar = document.getElementById('sidebar');
+            const mainContent = document.getElementById('mainContent');
+            const toggleButton = document.getElementById('sidebarToggle');
+            let sidebarOpen = true;
+
+            toggleButton.addEventListener('click', function() {
+                sidebarOpen = !sidebarOpen;
+                
+                if (sidebarOpen) {
+                    sidebar.style.transform = 'translateX(0)';
+                    mainContent.style.marginLeft = '18rem';
+                    toggleButton.classList.remove('hamburger-active');
+                } else {
+                    sidebar.style.transform = 'translateX(-100%)';
+                    mainContent.style.marginLeft = '0';
+                    toggleButton.classList.add('hamburger-active');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

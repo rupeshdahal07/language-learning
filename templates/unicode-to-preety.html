@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Unicode to Preeti Converter</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-gray-800 mb-2">Unicode ↔ Preeti Converter</h1>
+            <p class="text-gray-600">Convert between Unicode and Preeti Nepali text formats</p>
+        </div>
+
+        <!-- Main Content -->
+        <div class="max-w-6xl mx-auto">
+            <div class="grid md:grid-cols-2 gap-6">
+                <!-- Unicode Text -->
+                <div class="bg-white rounded-lg shadow-lg p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h2 class="text-xl font-semibold text-gray-800">Unicode Text</h2>
+                        <button onclick="clearUnicode()" class="text-sm text-gray-500 hover:text-red-500 transition-colors">
+                            Clear
+                        </button>
+                    </div>
+                    <textarea 
+                        id="unicode_text" 
+                        rows="12" 
+                        class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                        placeholder="Enter Unicode Nepali text here..."
+                    ></textarea>
+                    <div class="flex gap-2 mt-4">
+                        <button onclick="convert_to_Preeti()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors">
+                            Convert to Preeti →
+                        </button>
+                        <button onclick="copyUnicode()" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-2 rounded-lg transition-colors">
+                            📋
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Preeti Text -->
+                <div class="bg-white rounded-lg shadow-lg p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h2 class="text-xl font-semibold text-gray-800">Preeti Text</h2>
+                        <button onclick="clearPreeti()" class="text-sm text-gray-500 hover:text-red-500 transition-colors">
+                            Clear
+                        </button>
+                    </div>
+                    <textarea 
+                        id="legacy_text" 
+                        rows="12" 
+                        class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent resize-none font-mono"
+                        placeholder="Preeti text will appear here..."
+                    ></textarea>
+                    <div class="flex gap-2 mt-4">
+                        <button onclick="convert_to_unicode()" class="flex-1 bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-lg transition-colors">
+                            ← Convert to Unicode
+                        </button>
+                        <button onclick="copyPreeti()" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-2 rounded-lg transition-colors">
+                            📋
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Swap Button -->
+            <div class="text-center mt-6">
+                <button onclick="swapTexts()" class="bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-6 rounded-lg transition-colors inline-flex items-center gap-2">
+                    <span>⇄</span>
+                    Swap Texts
+                </button>
+            </div>
+
+            <!-- Sample Text -->
+            <div class="bg-white rounded-lg shadow-lg p-6 mt-6">
+                <h3 class="text-lg font-semibold text-gray-800 mb-3">Sample Text</h3>
+                <div class="grid md:grid-cols-2 gap-4">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600 mb-2">Unicode Sample:</p>
+                        <div class="bg-gray-50 p-3 rounded border text-sm cursor-pointer hover:bg-gray-100 transition-colors" onclick="loadSampleUnicode()">
+                            नेपाली भाषा संसारकी एक सुन्दर भाषा हो।
+                        </div>
+                    </div>
+                    <div>
+                        <p class="text-sm font-medium text-gray-600 mb-2">Preeti Sample:</p>
+                        <div class="bg-gray-50 p-3 rounded border text-sm font-mono cursor-pointer hover:bg-gray-100 transition-colors" onclick="loadSamplePreeti()">
+                            g]kfnL efiff ;+;f/sL Ps ;'Gb/ efiff xf] .
+                        </div>
+                    </div>
+                </div>
+                <p class="text-xs text-gray-500 mt-2">Click on sample text to load it</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Unicode to Preeti conversion function
+        function convert_to_unicode() {
+            var array_one = [
+                "ç","˜",".","'m","]m","Fmf","Fm",
+                ")","!","@","#","$","%","^","&","*","(",
+                "k|m","em","km","Qm","qm","NË",
+                "¡","¢","1","2","4",">","?","B","I","Q","ß",
+                "q","„","‹","•","›","§","°","¶","¿","Å",   
+                "Ë","Ì","Í","Î","Ï","å",
+                "6«","7«","8«","9«",
+                "Ø","|",
+                "8þ","9þ",
+                "S","s","V","v","U","u","£","3","ª",
+                "R","r","5","H","h","‰","´","~", "`",
+                "6","7","8","9","0",
+                "T","t","Y","y","b","W","w","G","g",  
+                "K","k","ˆ","A","a","E", "e","D","d",
+                "o","/","N","n","J", "j", "Z","z","i",":",";","X","x", 
+                "cf'","c'f","cf}","cf]","cf","c","O{","O","pm","p","C","P]","P",
+                "f'","\"","'","+","f","[","\\","]","}","F", "L","M",
+                "ु ा","ु ो","ु ौ","अो","अा","आै","आे","ाो","ाॅ","ाे",
+                "ं ","ेे","अै","ाे","अे","ंा","अॅ","ाै","ैा","ंृ",
+                "ैा","ूै","ोा","ंे"
+            ];
+
+            var array_two = [
+                "ँ","ॽ","।","m'","m]","mfF","mF",
+                "०","१","२","३","४","५","६","७","८","९",
+                "फ्र","र्","फ","क्त","क्र","ल",
+                "ज्ञ्","द्घ","ज्ञ","द्द","द्ध","श्र","र्","द्य","क्ष्","त्त","द्म", 
+                "त्र","ध्र","ङ्घ","ड्ड","द्र","ट्ट","ड्ढ","ठ्ठ","रू","हृ",   
+                "ङ्ग","त्र","ङ्क","ङ्ख","ट्ठ","द्व",
+                "ट्र","ठ्र","ड्र","ढ्र",
+                "्य","्र",
+                "ड़","ढ़",
+                "क्","क","ख्","ख","ग्","ग","घ्","घ", "ङ",
+                "च्","च","छ","ज्","ज","झ्","झ","ञ्", "ञ",
+                "ट","ठ","ड","ढ","ण्",
+                "त्","त","थ्","थ","द","ध्","ध","न्","न",  
+                "प्","प","फ्","ब्","ब","भ्","भ","म्","म",
+                "य","र","ल्","ल","व्","व","श्","श","ष्","स्","स","ह्","ह",
+                "ऑ","ऒ","ओ","औ","आ","अ","ई","इ","ऊ","उ","ऋ","ए","ए",
+                "ॉ","ू","ु","ं","ा","ृ","्","े","ै","ऽ","ी","ः",
+                "","े","ै","औ","आ","औ","औ","ो","ॉ","ो",
+                "ुं","े","अ‌ै","ो","अ‌े","ां","अ‌ॅ","ौ","ौ","ृं",
+                "ाै","ूै","ो","ें"
+            ];
+
+            var array_one_length = array_one.length;
+            var modified_substring = document.getElementById("legacy_text").value;
+
+            if (modified_substring != "") {
+                // Replace symbols
+                for (var input_symbol_idx = 0; input_symbol_idx < array_one_length; input_symbol_idx++) {
+                    var idx = 0;
+                    while (idx != -1) {
+                        modified_substring = modified_substring.replace(array_one[input_symbol_idx], array_two[input_symbol_idx]);
+                        idx = modified_substring.indexOf(array_one[input_symbol_idx]);
+                    }
+                }
+
+                // Handle special characters
+                var position_of_i = modified_substring.indexOf("l");
+                while (position_of_i != -1) {
+                    var character_next_to_i = modified_substring.charAt(position_of_i + 1);
+                    var character_to_be_replaced = "l" + character_next_to_i;
+                    modified_substring = modified_substring.replace(character_to_be_replaced, character_next_to_i + "ि");
+                    position_of_i = modified_substring.search(/l/, position_of_i + 1);
+                }
+
+                // Handle reph
+                var set_of_matras = "ा ि ी ु ू ृ े ै ो ौ ं : ऽ ॅ";
+                var position_of_R = modified_substring.indexOf("{");
+                while (position_of_R > 0) {
+                    var probable_position_of_half_r = position_of_R - 1;
+                    var character_at_probable_position_of_half_r = modified_substring.charAt(probable_position_of_half_r);
+
+                    while (set_of_matras.match(character_at_probable_position_of_half_r) != null) {
+                        probable_position_of_half_r = probable_position_of_half_r - 1;
+                        character_at_probable_position_of_half_r = modified_substring.charAt(probable_position_of_half_r);
+                    }
+
+                    var character_to_be_replaced = modified_substring.substr(probable_position_of_half_r, (position_of_R - probable_position_of_half_r));
+                    var new_replacement_string = "र्" + character_to_be_replaced;
+                    character_to_be_replaced = character_to_be_replaced + "{";
+                    modified_substring = modified_substring.replace(character_to_be_replaced, new_replacement_string);
+                    position_of_R = modified_substring.indexOf("{");
+                }
+            }
+
+            document.getElementById("unicode_text").value = modified_substring;
+        }
+
+        // Preeti to Unicode conversion function
+        function convert_to_Preeti() {
+            var array_one = [
+                "'","?",
+                "क़","ख़","ग़","ज़","ड़","ढ़","फ़",
+                "ँ","ॽ","।","m'","m]","mfF","mF",
+                "०","१","२","३","४","५","६","७","८","९",
+                "फ्र","र्","फ","क्त","क्र","ल",
+                "ज्ञ्","द्घ","ज्ञ","द्द","द्ध","श्र","र्","द्य","क्ष्","क्ष","त्त","द्म", 
+                "त्र","ध्र","ङ्घ","ड्ड","द्र","ट्ट","ड्ढ","ठ्ठ","रू","हृ",   
+                "ङ्ग","त्र","ङ्क","ङ्ख","ट्ठ","द्व",
+                "ट्र","ठ्र","ड्र","ढ्र",
+                "्र",
+                "ड़","ढ़",
+                "क्","क","ख्","ख","ग्","ग","घ्","घ", "ङ",
+                "च्","च","छ","ज्","ज","झ्","झ","ञ्", "ञ",
+                "ट","ठ","ड","ढ","ण्","ण",
+                "त्","त","थ्","थ","द","ध्","ध","न्","न",  
+                "प्","प","फ्","ब्","ब","भ्","भ","म्","म",
+                "य","र","ल्","ल","व्","व","श्","श","ष्","ष","स्","स","ह्","ह",
+                "्य",
+                "ऑ","ऒ","ओ","औ","आ","अ","ई","इ","ऊ","उ","ऋ","ऐ","ए",
+                "ॉ","ू","ु","ं","ा","ृ","्","े","ै","ऽ","ी","ः","ो","ौ"
+            ];
+
+            var array_two = [
+                "…","<",
+                "क़","ख़","ग़","ज़","ड़","ढ़","फ़",
+                "ç","˜",".","'m","]m","Fmf","Fm",
+                ")","!","@","#","$","%","^","&","*","(",
+                "k|m","em","km","Qm","qm","n",
+                "¡","¢","1","2","4",">","?","B","I","If","Q","ß",
+                "q","„","‹","•","›","§","°","¶","¿","Å",   
+                "Ë","Ì","Í","Î","Ï","å",
+                "6«","7«","8«","9«",
+                "|",
+                "8þ","9þ",
+                "S","s","V","v","U","u","£","3","ª",
+                "R","r","5","H","h","‰","´","~", "`",
+                "6","7","8","9","0","0f",
+                "T","t","Y","y","b","W","w","G","g",  
+                "K","k","ˆ","A","a","E", "e","D","d",
+                "o","/","N","n","J", "j", "Z","z","i","if",":",";","X","x", 
+                "Ø",
+                "cf'","c'f","cf}","cf]","cf","c","O{","O","pm","p","C","P]","P",
+                "f'","\"","'","+","f","[","\\","]","}","F", "L","M","f]","f}"
+            ];
+
+            var array_one_length = array_one.length;
+            var modified_substring = document.getElementById("unicode_text").value;
+
+            if (modified_substring != "") {
+                // Handle ि replacement
+                modified_substring += '  '; // add spaces to avoid undefined char
+                var position_of_f = modified_substring.indexOf("ि");
+                while (position_of_f != -1) {
+                    var character_left_to_f = modified_substring.charAt(position_of_f - 1);
+                    modified_substring = modified_substring.replace(character_left_to_f + "ि", "l" + character_left_to_f);
+                    position_of_f = position_of_f - 1;
+
+                    while ((modified_substring.charAt(position_of_f - 1) == "्") & (position_of_f != 0)) {
+                        var string_to_be_replaced = modified_substring.charAt(position_of_f - 2) + "्";
+                        modified_substring = modified_substring.replace(string_to_be_replaced + "l", "l" + string_to_be_replaced);
+                        position_of_f = position_of_f - 2;
+                    }
+                    position_of_f = modified_substring.search(/ि/, position_of_f + 1);
+                }
+
+                // Handle reph
+                var set_of_matras = "ािীুূৃেৈোৌং:ৗঅ";
+                var position_of_half_R = modified_substring.indexOf("र्");
+                while (position_of_half_R > 0) {
+                    var probable_position_of_Z = position_of_half_R + 2;
+                    var character_at_probable_position_of_Z = modified_substring.charAt(probable_position_of_Z);
+
+                    while (set_of_matras.match(character_at_probable_position_of_Z) != null) {
+                        probable_position_of_Z = probable_position_of_Z + 1;
+                        character_at_probable_position_of_Z = modified_substring.charAt(probable_position_of_Z);
+                    }
+
+                    var right_to_position_of_Z = probable_position_of_Z + 1;
+                    if (right_to_position_of_Z > 0) {
+                        var character_right_to_position_of_Z = modified_substring.charAt(right_to_position_of_Z);
+                        while ("्".match(character_right_to_position_of_Z) != null) {
+                            probable_position_of_Z = right_to_position_of_Z + 1;
+                            character_at_probable_position_of_Z = modified_substring.charAt(probable_position_of_Z);
+                            right_to_position_of_Z = probable_position_of_Z + 1;
+                            character_right_to_position_of_Z = modified_substring.charAt(right_to_position_of_Z);
+                        }
+                    }
+
+                    var string_to_be_replaced = modified_substring.substr(position_of_half_R + 2, (probable_position_of_Z - position_of_half_R) - 1);
+                    modified_substring = modified_substring.replace("र्" + string_to_be_replaced, string_to_be_replaced + "{");
+                    position_of_half_R = modified_substring.indexOf("र्");
+                }
+
+                modified_substring = modified_substring.substr(0, modified_substring.length - 2);
+
+                // Replace symbols
+                for (var input_symbol_idx = 0; input_symbol_idx < array_one_length; input_symbol_idx++) {
+                    var idx = 0;
+                    while (idx != -1) {
+                        modified_substring = modified_substring.replace(array_one[input_symbol_idx], array_two[input_symbol_idx]);
+                        idx = modified_substring.indexOf(array_one[input_symbol_idx]);
+                    }
+                }
+            }
+
+            document.getElementById("legacy_text").value = modified_substring;
+        }
+
+        // Utility functions
+        function clearUnicode() {
+            document.getElementById("unicode_text").value = "";
+        }
+
+        function clearPreeti() {
+            document.getElementById("legacy_text").value = "";
+        }
+
+        function copyUnicode() {
+            var text = document.getElementById("unicode_text");
+            text.select();
+            document.execCommand("copy");
+            showNotification("Unicode text copied!");
+        }
+
+        function copyPreeti() {
+            var text = document.getElementById("legacy_text");
+            text.select();
+            document.execCommand("copy");
+            showNotification("Preeti text copied!");
+        }
+
+        function swapTexts() {
+            var unicodeText = document.getElementById("unicode_text").value;
+            var preetiText = document.getElementById("legacy_text").value;
+            
+            document.getElementById("unicode_text").value = preetiText;
+            document.getElementById("legacy_text").value = unicodeText;
+        }
+
+        function loadSampleUnicode() {
+            document.getElementById("unicode_text").value = "नेपाली भाषा संसारकी एक सुन्दर भाषा हो।";
+        }
+
+        function loadSamplePreeti() {
+            document.getElementById("legacy_text").value = "g]kfnL efiff ;+;f/sL Ps ;'Gb/ efiff xf] .";
+        }
+
+        function showNotification(message) {
+            // Simple notification (you could enhance this with a proper toast library)
+            alert(message);
+        }
+    </script>
+</body>
+</html>
