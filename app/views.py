@@ -9,6 +9,21 @@ import json
 from django.contrib.auth.decorators import login_required
 from .helper import wrap_preeti_in_sentence, wrap_preeti_before_parenthesis, quiz_question_wrapper
 
+def ServiceLesson(result, level_type, lesson_id ):
+    if result.data and len(result.data) > 0:
+            level_id = result.data[0]['id']  # This is the inserted quiz_data id
+            print("Inserted level_id:", level_id)
+
+    lessons_data = {"level_id": level_id , "level_type": level_type, "sub_level_id": 0}
+    # Fetch the existing row
+    row = supabase.table("lessons").select("data").eq("id", lesson_id).single().execute()
+    current_data = row.data["data"]
+    if not current_data:
+        current_data = []
+    current_data.append(lessons_data)
+    supabase.table("lessons").update({"data": current_data}).eq("id", lesson_id).execute()
+
+
 @login_required
 def dashboard(request):
     """
@@ -127,26 +142,53 @@ def create_user(request):
 
 #-------------------path------------------------------------------------>>>
 def create_path(request):
-    # Fetch all lessons for selection
-    lessons_response = supabase.table("lessons").select("id, data").order("created_at", desc=True).execute()
-    lessons = lessons_response.data
-
     if request.method == 'POST':
         path_title = request.POST.get('path_title')
-        selected_lesson_ids = request.POST.getlist('lessons')  # List of lesson IDs as strings
 
-        # Insert into Supabase
+        # Step 1: Create the path with empty lessons array
         path_data = {
             "title": path_title,
-            "lessons": selected_lesson_ids  # Store as array of strings
+            "lessons": []
         }
         try:
-            supabase.table("paths").insert(path_data).execute()
-            return render(request, 'paths.html', {'success': 'Path created successfully!', 'lessons': lessons})
-        except Exception as e:
-            return render(request, 'paths.html', {'error': f'Error creating path: {str(e)}', 'lessons': lessons})
+            path_result = supabase.table("paths").insert(path_data).execute()
+            if not path_result.data or len(path_result.data) == 0:
+                return render(request, 'paths.html', {'error': 'Path creation failed.'})
+            path_id = path_result.data[0]['id']
 
-    return render(request, 'paths.html', {'lessons': lessons})
+            # Step 2: Create 5 lessons and collect their IDs
+            lesson_ids = []
+            lesson_name = ['Conversations','Alphabets', 'Vocabs', 'Grammar', 'Kanji']
+            lesson_type = [1, 2, 4, 8, 16]
+            for i in range(0, 5):
+                lesson_data = {
+                    "path_id": path_id,
+                    "lesson_title": f"Path {path_id}: Lesson-{i+1}: {lesson_name[i]} ",
+                    "lesson_description": lesson_name[i],
+                    "data": [],
+                    "lesson_type": lesson_type[i],
+                    "image_url": None
+                }
+                lesson_result = supabase.table("lessons").insert([lesson_data]).execute()
+                print("Lesson insert result:", lesson_result.data)
+                if lesson_result.data and len(lesson_result.data) > 0:
+                    lesson_ids.append(lesson_result.data[0]['id'])
+                else:
+                    print(f"Lesson {i+1} insert failed!")
+
+            # Step 3: Update the path with the lesson IDs
+            print("Collected lesson_ids:", lesson_ids)
+            print("Path insert result:", path_result.data)
+            
+            # Direct update without fetching current lessons since we just created the path
+            update_result = supabase.table("paths").update({"lessons": lesson_ids}).eq("id", path_id).execute()
+            print("Update result:", update_result)
+
+            return render(request, 'paths.html', {'success': 'Path and 5 lessons created successfully!'})
+        except Exception as e:
+            return render(request, 'paths.html', {'error': f'Error creating path: {str(e)}'})
+
+    return render(request, 'paths.html')
 
 def list_paths(request):
     """
@@ -174,6 +216,25 @@ def create_lesson(request):
     if request.method == 'POST':
         lesson_title = request.POST.get('lessonTitle')
         lesson_description = request.POST.get('lessonDescription', '')
+        image_file = request.FILES.get('image')
+        lesson_type = request.POST.getlist('lessonCategory')
+
+        lesson_type = sum(int(val) for val in lesson_type)
+
+         # ------uploading the image to supabase bucket
+        image_url = None
+        if image_file:
+            # return render(request, 'word_form.html', {'error': 'All fields are required.'})
+
+            # 1. Upload image file to Supabase Storage
+            file_name = f"images/{image_file.name}"  # folder 'image/' inside bucket
+            try:
+                res = supabase.storage.from_("images").upload(file_name, image_file.read())
+            except Exception as e:
+                return render(request, 'word_form.html', {'error': f'Upload failed: {str(e)}'})
+
+            # # 2. Build public URL (no signed URL needed)
+            image_url = f"/storage/v1/object/public/images/{file_name}"
 
         # Collect all level configurations
         levels = []
@@ -192,13 +253,15 @@ def create_lesson(request):
             index += 1
 
         # Prepare lesson data as JSON
-        lesson_data = {
+        lesson_data = [{
         'lesson_title': lesson_title,
         'lesson_description': lesson_description,
-        'levels': levels
-            }
+        'data': levels,
+        'lesson_type': lesson_type,
+        'image_url': image_url
+            }]
     # Insert as JSONB (not as a string)
-        supabase.table("lessons").insert({"data": lesson_data}).execute()
+        supabase.table("lessons").insert(lesson_data).execute()
         
         print('Lesson JSON:', lesson_data)
 
@@ -212,47 +275,58 @@ def get_level_ids(request):
     
     if lesson_type == '5':
         table = "fill_blanks_level"
-    elif lesson_type == '3':
-        table = "match_the_following_level"
+    elif lesson_type == '0':
+        table = "letters"
     elif lesson_type == '1':
         table = "quiz_levels"
+    elif lesson_type == '2':
+        table = "word_game_level"
+    elif lesson_type == '3':
+        table = "match_the_following_level"
     elif lesson_type == '4':
         table = "word_form_levels"
+    elif lesson_type == '6':
+        table = "information_level"
+    elif lesson_type == '7':
+        table = "meaning_level"
+    elif lesson_type == '8':
+        table = "quiz_lev   els"
     else:
         return JsonResponse({'level_ids': []})
 
-    if lesson_type in ['1','5']:
-        response = supabase.table(table).select("id, data").execute()
+    if lesson_type in ['1', '2', '3', '4', '5','6', '8']:
+        response = supabase.table(table).select("id, title").execute()
         print(response)
         level_ids = []
         for row in response.data:
-            label = row['data'].get('questionText', str(row['id']))
+            label = row.get('title', str(row['id']))
             level_ids.append({'value': row['id'], 'label': label})
         return JsonResponse({'level_ids': level_ids})
-
-    if lesson_type == '3':
-        response = supabase.table(table).select("id, data").execute()
-        print(f'match the following:{response}')
-        level_ids = []
-        for row in response.data:
-            # Get first pair for display label
-            pairs = row['data'] if row['data'] else []
-            if pairs and len(pairs) > 0:
-                first_pair = pairs[0]
-                label = f"{first_pair.get('nepali', '')} - {first_pair.get('japanese', '')}"
-            else:
-                label = f"Match Exercise {row['id']}"
-            level_ids.append({'value': row['id'], 'label': label})
-            
-        return JsonResponse({'level_ids': level_ids})
-        
-
-    if lesson_type == '4':
-        response = supabase.table(table).select("id, question").execute()
+    
+    if lesson_type == '0':
+        response = supabase.table(table).select("id, letter_name").execute()
         print(response)
         level_ids = []
         for row in response.data:
-            label = row.get('question', str(row['id']))
+            label = row.get('letter_name', str(row['id']))
+            level_ids.append({'value': row['id'], 'label': label})
+        return JsonResponse({'level_ids': level_ids})
+    
+    if lesson_type == '6':
+        response = supabase.table(table).select("id, created_at").execute()
+        print(response)
+        level_ids = []
+        for row in response.data:
+            label = row.get(str(row['id']))
+            level_ids.append({'value': row['id'], 'label': label})
+        return JsonResponse({'level_ids': level_ids})
+    
+    if lesson_type == '7':
+        response = supabase.table(table).select("id, word").execute()
+        print(response)
+        level_ids = []
+        for row in response.data:
+            label = row.get('word', str(row['id']))
             level_ids.append({'value': row['id'], 'label': label})
         return JsonResponse({'level_ids': level_ids})
 
@@ -279,14 +353,65 @@ def list_lessons(request):
         }
     return render(request, 'lesson_list.html', context)
 
+def delete_lesson(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            lesson_id = data.get('id')
+            supabase.table("lessons").delete().eq("id", lesson_id).execute()
+            return JsonResponse({'success': True})
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)})
+    return JsonResponse({'success': False, 'error': 'Invalid request'}, status=400)
+
+
+def edit_lesson(request, lesson_id):
+    lesson = supabase.table("lessons").select("*").eq("id", lesson_id).single().execute().data
+    if not lesson:
+        return render(request, 'lesson_form.html', {'error': 'Lesson not found.'})
+
+    if request.method == 'POST':
+        lesson_title = request.POST.get('lessonTitle')
+        lesson_description = request.POST.get('lessonDescription', '')
+        # Update logic for levels if needed
+
+        update_data = {
+            'lesson_title': lesson_title,
+            'lesson_description': lesson_description,
+            # Add other fields as needed
+        }
+        supabase.table("lessons").update(update_data).eq("id", lesson_id).execute()
+        return redirect('list_lessons')
+
+    return render(request, 'lesson_form.html', {'lesson': lesson})
 #-------------------------lessonEnd--------------------------------->>>>>>>>>>>
 
 
 
 def create_quiz(request):
+    paths = supabase.table('paths').select("id, title").execute()
+    lessons = supabase.table('lessons').select("id, lesson_title").execute()
+    
+
+    lesson_ids = []
+    for row in lessons.data:
+        title = row.get('lesson_title', str(row['id']))
+        lesson_ids.append({'id': row['id'], 'title': title})
+
+    path_ids = []
+    for row in paths.data:
+        title = row.get('title', str(row['id']))
+        path_ids.append({'id': row['id'], 'title': title})
+        # return JsonResponse({'level_ids': path_ids})
+    
     if request.method == 'POST':
-        question_text = quiz_question_wrapper(request.POST.get('questionText'))
+        question_text = request.POST.get('questionText')
         correct_option = int(request.POST.get('correctOption'))
+        question_type = request.POST.get('languagePair')
+        title_text = request.POST.get('titleText')
+
+        path_id = request.POST.get('path_id')
+        lesson_id = request.POST.get('lesson_id')
 
         # Collect all options dynamically
         options = []
@@ -298,48 +423,43 @@ def create_quiz(request):
             options.append(wrap_preeti_in_sentence(opt))
             option_index += 1
 
+        if question_type =='english_nepali':
+            question_text = re.sub(r"<(.*?)>", r'<font="Preeti font  SDF">\1</font>', question_text)
+        #elif question_type == 'english_japanese':
+            
+        elif question_type == 'nepali':
+            question_text = f'<font="Preeti font  SDF">{question_text}</font>'
         # Create your quiz_data structure
         quiz_data = [{
             "data": {
                 "questionText": question_text,
                 "options": options,
-                "correctOption": correct_option
-            }
+                "correctOption": correct_option,
+                
+            },
+            "title": title_text
         }]
+
+        result = supabase.table("quiz_levels").insert(quiz_data).execute()
         print(quiz_data)
-        supabase.table("quiz_levels").insert(quiz_data).execute()
-        return render(request, 'quiz.html')
+        if result.data and len(result.data) > 0:
+            level_id = result.data[0]['id']  # This is the inserted quiz_data id
+            print("Inserted quiz level_id:", level_id)
 
-    return render(request, 'quiz.html')
+        #add to lessons
+        lessons_data = {"level_id": level_id, "level_type": 1, "sub_level_id": 0}
+        # Fetch the existing row
+        row = supabase.table("lessons").select("data").eq("id", lesson_id).single().execute()
+        current_data = row.data["data"]
+        if not current_data:
+            current_data = []
+        current_data.append(lessons_data)
+        supabase.table("lessons").update({"data": current_data}).eq("id", lesson_id).execute()
 
+        return render(request, 'quiz.html', {'success': 'Word inserted successfully.', 'path_ids': path_ids, 'lesson_ids': lesson_ids} )
 
-# def create_quize_mix(request):
-#     if request.method == 'POST':
-#         question_text = request.POST.get('questionText')
-#         correct_option = int(request.POST.get('correctOption'))
-        
-#         options = [
-            
-#             request.POST.get('option_0'),
-#             request.POST.get('option_1'),
-#             request.POST.get('option_2'),
-#             request.POST.get('option_3')
-#         ]
-        
-#         # Create your quiz_data structure
-#         quiz_data = [{
-#             "data": {
-#                 "questionText": question_text,
-#                 "options": options,
-#                 "correctOption": correct_option
-#             }
-#         }]
-#         print(quiz_data)
-#         # Process the data...
-#         supabase.table("quiz_levels").insert(quiz_data).execute()
-#         return render(request, 'quiz.html')
-        
-#     return render(request, 'quiz.html')
+    return render(request, 'quiz.html', {'path_ids': path_ids, 'lesson_ids': lesson_ids})
+
 
 def list_quiz_questions(request):
     """
@@ -367,12 +487,29 @@ def list_quiz_questions(request):
 
 
 
-
 def create_fill_blank(request):
+    paths = supabase.table('paths').select("id, title").execute()
+    lessons = supabase.table('lessons').select("id, lesson_title").execute()
+    
+
+    lesson_ids = []
+    for row in lessons.data:
+        title = row.get('lesson_title', str(row['id']))
+        lesson_ids.append({'id': row['id'], 'title': title})
+
+    path_ids = []
+    for row in paths.data:
+        title = row.get('title', str(row['id']))
+        path_ids.append({'id': row['id'], 'title': title})
+
     if request.method == 'POST':
         question_text = request.POST.get('questionText')
         correct_option = request.POST.get('correctOption')
-        audio_file = request.FILES.get('audio')
+        # audio_file = request.FILES.get('audio')
+        image_file = request.FILES.get('image')
+        path_id = request.POST.get('path_id')
+        lesson_id = request.POST.get('lesson_id')
+
         options = []
         option_index = 0
         while True:
@@ -384,9 +521,11 @@ def create_fill_blank(request):
         letter_title = request.POST.get('letterTitle')
         topics = [
             request.POST.get('topic_0'),
-            request.POST.get('topic_1'),
+            # request.POST.get('topic_1'),
         ]
         meaning = request.POST.get('letterMeaning')
+        if meaning:
+            meaning = re.sub(r"<(.*?)>", r'<font="Preeti font  SDF">\1</font>', meaning)
 
         # Improved validation: check for None or empty string in all fields
         if (
@@ -401,18 +540,32 @@ def create_fill_blank(request):
         ):
             return render(request, 'fill_blank.html', {'error': 'All fields are required.'})
         
-        if not audio_file or not options:
+        # if not audio_file or not options:
+        #     return render(request, 'word_form.html', {'error': 'All fields are required.'})
+
+        # # 1. Upload audio file to Supabase Storage
+        # file_name = f"audio/{audio_file.name}"  # folder 'audio/' inside bucket
+        # try:
+        #     res = supabase.storage.from_("audio").upload(file_name, audio_file.read())
+        # except Exception as e:
+        #     return render(request, 'word_form.html', {'error': f'Upload failed: {str(e)}'})
+
+        # # 2. Build public URL (no signed URL needed)
+        # audio_url = f"http://64.227.141.251:8000/storage/v1/object/public/audio/{file_name}"
+
+        # ------uploading the image to supabase bucket
+        if not image_file or not options:
             return render(request, 'word_form.html', {'error': 'All fields are required.'})
 
-        # 1. Upload audio file to Supabase Storage
-        file_name = f"audio/{audio_file.name}"  # folder 'audio/' inside bucket
+        # 1. Upload image file to Supabase Storage
+        file_name = f"images/{image_file.name}"  # folder 'image/' inside bucket
         try:
-            res = supabase.storage.from_("audio").upload(file_name, audio_file.read())
+            res = supabase.storage.from_("images").upload(file_name, image_file.read())
         except Exception as e:
             return render(request, 'word_form.html', {'error': f'Upload failed: {str(e)}'})
 
-        # 2. Build public URL (no signed URL needed)
-        audio_url = f"http://64.227.141.251:8000/storage/v1/object/public/audio/{file_name}"
+        # # 2. Build public URL (no signed URL needed)
+        image_url = f"/storage/v1/object/public/images/{file_name}"
 
 
         fill_blank = [
@@ -421,19 +574,23 @@ def create_fill_blank(request):
                     "questionText": question_text,
                     "options": options,
                     "correctOption": int(correct_option),
-                    "audioUrl": audio_url,
+                    
+                    # "audioUrl": audio_url,
                 },
                 "letter_info": {
                     "title": letter_title,
                     "topics": topics,
                     "meaning": meaning,
                     
-                }
+                },
+                "imageUrl": image_url,
+                "title": question_text
             }
         ]
         print(fill_blank)
-        supabase.table("fill_blanks_level").insert(fill_blank).execute()
-    return render(request, 'fill_blank.html')
+        result = supabase.table("fill_blanks_level").insert(fill_blank).execute()
+        ServiceLesson(result, 5, lesson_id )
+    return render(request, 'fill_blank.html', {'path_ids': path_ids, 'lesson_ids': lesson_ids})
 
 def list_fill_blanks(request):
     """
@@ -461,12 +618,27 @@ def list_fill_blanks(request):
 
 
 
-
-
 def create_word_from_level(request):
+    paths = supabase.table('paths').select("id, title").execute()
+    lessons = supabase.table('lessons').select("id, lesson_title").execute()
+    
+
+    lesson_ids = []
+    for row in lessons.data:
+        title = row.get('lesson_title', str(row['id']))
+        lesson_ids.append({'id': row['id'], 'title': title})
+
+    path_ids = []
+    for row in paths.data:
+        title = row.get('title', str(row['id']))
+        path_ids.append({'id': row['id'], 'title': title})
+
     if request.method == 'POST':
         audio_file = request.FILES.get('audioFile')
         nepali_sound = request.POST.get('sound')
+        path_id = request.POST.get('path_id')
+        lesson_id = request.POST.get('lesson_id')
+
         if nepali_sound:
             nepali_sound = f'<font="Preeti font SDF">{nepali_sound}</font>'
 
@@ -513,8 +685,7 @@ def create_word_from_level(request):
             return render(request, 'word_form.html', {'error': f'Upload failed: {str(e)}'})
 
         # 2. Build public URL (no signed URL needed)
-        audio_url = f"http://64.227.141.251:8000/storage/v1/object/public/audio/{file_name}"
-
+        audio_url = f"/storage/v1/object/public/audio/{file_name}"
 
 
         # 3. Insert into DB
@@ -524,11 +695,12 @@ def create_word_from_level(request):
             "options": options,
             "sound": nepali_sound
         }]
-        supabase.table("word_form_levels").insert(word_data).execute()
+        result = supabase.table("word_form_levels").insert(word_data).execute()
+        ServiceLesson(result, 4, lesson_id )
 
-        return render(request, 'word_form.html', {'success': 'Word inserted successfully.'})
+        return render(request, 'word_form.html', {'success': 'Word inserted successfully.', 'path_ids': path_ids, 'lesson_ids': lesson_ids})
 
-    return render(request, 'word_form.html')
+    return render(request, 'word_form.html', {'path_ids': path_ids, 'lesson_ids': lesson_ids})
 
 
 def list_word_form_levels(request):
@@ -551,17 +723,33 @@ def list_word_form_levels(request):
             'error': f'Error fetching data: {str(e)}',
             'total_count': 0
         }
-    
     return render(request, 'word_form_list.html', context)
 
 
 
 def create_match_following(request):
+    paths = supabase.table('paths').select("id, title").execute()
+    lessons = supabase.table('lessons').select("id, lesson_title").execute()
+    
+
+    lesson_ids = []
+    for row in lessons.data:
+        title = row.get('lesson_title', str(row['id']))
+        lesson_ids.append({'id': row['id'], 'title': title})
+
+    path_ids = []
+    for row in paths.data:
+        title = row.get('title', str(row['id']))
+        path_ids.append({'id': row['id'], 'title': title})
+
     if request.method == 'POST':
         # Collect all the pairs
         match_pairs = []
         pair_index = 0
         
+        path_id = request.POST.get('path_id')
+        lesson_id = request.POST.get('lesson_id')
+        word_type = request.POST.get('language_type')
         while True:
             nepali_key = f'nepali_{pair_index}'
             japanese_key = f'japanese_{pair_index}'
@@ -576,12 +764,14 @@ def create_match_following(request):
             # Only add pairs that have both values
             if nepali_value and japanese_value:
             # Only wrap in Preeti font if nepali_value is likely Preeti (not plain ASCII/romaji)
-                if re.fullmatch(r'[A-Za-z0-9\s\.\-\,\']+', nepali_value.strip()) and len(nepali_value.strip()) > 1:
-                    nepali_display = nepali_value.strip()
-                else:
-                    nepali_display = f'<font face="Preeti font  SDF">{nepali_value.strip()}</font>'
+                # if re.fullmatch(r'[A-Za-z0-9\s\.\-\,\']+', nepali_value.strip()) and len(nepali_value.strip()) > 1:
+                #     nepali_display = nepali_value.strip()
+
+                if word_type =='nepali_word':
+                    nepali_value = f'<font face="Preeti font  SDF">{nepali_value.strip()}</font>'
+
                 pair_dict = {
-                    "nepali": nepali_display,
+                    "nepali": nepali_value,
                     "japanese": japanese_value.strip()
                 }
                 match_pairs.append(pair_dict)
@@ -590,19 +780,22 @@ def create_match_following(request):
         
         # Create the match_data structure
         match_data = [{
-            "data": match_pairs
+            "data": match_pairs,
+            "title": request.POST.get('titleText')
         }]
         
         print("Match Following Data:", match_data)
         
         # Insert into database
         try:
-            supabase.table("match_the_following_level").insert(match_data).execute()
-            return render(request, 'match_the_following.html', {'success': 'Match exercise created successfully!'})
+            result = supabase.table("match_the_following_level").insert(match_data).execute()
+            ServiceLesson(result, 3, lesson_id )
+            return render(request, 'match_the_following.html', {'success': 'Match exercise created successfully!', 'path_ids': path_ids, 'lesson_ids': lesson_ids})
         except Exception as e:
             return render(request, 'match_the_following.html', {'error': f'Error creating exercise: {str(e)}'})
             
-    return render(request, 'match_the_following.html')
+    return render(request, 'match_the_following.html', {'path_ids': path_ids, 'lesson_ids': lesson_ids})
+
 
 def list_match_following(request):
     """
@@ -624,3 +817,307 @@ def list_match_following(request):
             'total_count': 0
         }
     return render(request, 'match_the_following_list.html', context)
+
+
+
+
+def create_word_game(request):
+    paths = supabase.table('paths').select("id, title").execute()
+    lessons = supabase.table('lessons').select("id, lesson_title").execute()
+    
+    lesson_ids = []
+    for row in lessons.data:
+        title = row.get('lesson_title', str(row['id']))
+        lesson_ids.append({'id': row['id'], 'title': title})
+
+    path_ids = []
+    for row in paths.data:
+        title = row.get('title', str(row['id']))
+        path_ids.append({'id': row['id'], 'title': title})
+
+    if request.method == 'POST':
+        title = request.POST.get('title')
+        options = [
+            request.POST.get('option_0'),
+            request.POST.get('option_1'),
+            request.POST.get('option_2'),
+            request.POST.get('option_3'),
+            request.POST.get('option_4'),
+        ]
+
+        path_id = request.POST.get('path_id')
+        lesson_id = request.POST.get('lesson_id')
+
+        valid_words = []
+        words_count = 0
+        while True:
+            words = request.POST.get(f'valid_{words_count}')
+            if words is None:
+                break
+            valid_words.append(words)
+            words_count +=1
+
+        data = [{
+            'options':options,
+            'valid_words': valid_words,
+            'title': title
+        }]
+        print(data)
+        result = supabase.table("word_game_level").insert(data).execute()
+        ServiceLesson(result, 2, lesson_id )
+        return render(request, 'word_game.html', {'success': 'Word inserted successfully.', 'path_ids': path_ids, 'lesson_ids': lesson_ids})
+    
+    return render(request, 'word_game.html', {'path_ids': path_ids, 'lesson_ids': lesson_ids})
+
+
+
+
+def create_letters(request):
+    paths = supabase.table('paths').select("id, title").execute()
+    lessons = supabase.table('lessons').select("id, lesson_title").execute()
+
+    lesson_ids = []
+    for row in lessons.data:
+        title = row.get('lesson_title', str(row['id']))
+        lesson_ids.append({'id': row['id'], 'title': title})
+
+    path_ids = []
+    for row in paths.data:
+        title = row.get('title', str(row['id']))
+        path_ids.append({'id': row['id'], 'title': title})
+
+    if request.method == 'POST':
+        english_letter = request.POST.get('letter_name')
+        nepali_letter = request.POST.get('nepali_letter')
+        japanese_letter = request.POST.get('japanese_letter')
+        letter_collection = request.POST.get('japanese_character_type')
+        audio_file = request.FILES.get('audio')
+
+        onyomi = request.POST.get('onyomi')
+        kunyomi = request.POST.get('kunyomi')
+
+        path_id = request.POST.get('path_id')
+        lesson_id = request.POST.get('lesson_id')
+
+        if nepali_letter:
+            nepali_letter = f'<font="Preeti font  SDF">{nepali_letter}</font>'
+
+         # 1. Upload audio file to Supabase Storage
+        audio_url = None
+        if audio_file:
+            file_name = f"audio/{audio_file.name}"  # folder 'audio/' inside bucket
+            try:
+                res = supabase.storage.from_("audio").upload(file_name, audio_file.read())
+            except Exception as e:
+                return render(request, 'word_form.html', {'error': f'Upload failed: {str(e)}'})
+
+            # 2. Build public URL (no signed URL needed)
+            audio_url = f"/storage/v1/object/public/audio/{file_name}"
+
+        data = [{
+            'collection_id': letter_collection,
+            'letter_name': english_letter,
+            'nepali_text': nepali_letter,
+            'japanese_text': japanese_letter,
+            'letter_info': {'onyomi': onyomi, 'kunyomi': kunyomi},
+            'audio': audio_url,
+        }]
+        print(data)
+        result = supabase.table('letters').insert(data).execute()
+        
+        if result.data and len(result.data) > 0:
+            level_id = result.data[0]['id']  # This is the inserted quiz_data id
+            print("Inserted letter level_id:", level_id)
+
+        #add to lessons
+        lessons_data = {"level_id": int(letter_collection), "level_type": 0, "sub_level_id": level_id}
+        # Fetch the existing row
+        row = supabase.table("lessons").select("data").eq("id", lesson_id).single().execute()
+        current_data = row.data["data"]
+        if not current_data:
+            current_data = []
+        current_data.append(lessons_data)
+        supabase.table("lessons").update({"data": current_data}).eq("id", lesson_id).execute()
+
+        return render(request, 'letters_tracing.html', {'success': 'Word inserted successfully.', 'path_ids': path_ids, 'lesson_ids': lesson_ids})
+    
+    return render(request, 'letters_tracing.html', {'path_ids': path_ids, 'lesson_ids': lesson_ids})
+
+
+
+
+def information_level(request):
+    paths = supabase.table('paths').select("id, title").execute()
+    lessons = supabase.table('lessons').select("id, lesson_title").execute()
+    
+
+    lesson_ids = []
+    for row in lessons.data:
+        title = row.get('lesson_title', str(row['id']))
+        lesson_ids.append({'id': row['id'], 'title': title})
+
+    path_ids = []
+    for row in paths.data:
+        title = row.get('title', str(row['id']))
+        path_ids.append({'id': row['id'], 'title': title})
+
+    if request.method == 'POST':
+        title = request.POST.get('letterTitle')
+        meaning = request.POST.get('letterMeaning')
+        Onyomi = request.POST.get('topic_0')
+        Kunyomi = request.POST.get('topic_1')
+        image_file = request.FILES.get('image')
+
+        path_id = request.POST.get('path_id')
+        lesson_id = request.POST.get('lesson_id')
+        
+        use_cases = []
+        usecase_count = 0
+        while True:
+            use_case = request.POST.get(f'option_{usecase_count}')
+            if use_case is None:
+                break
+            use_cases.append(use_case)
+            usecase_count += 1
+        
+
+        # ------uploading the image to supabase bucket
+        image_url = None
+        if image_file:
+            # return render(request, 'word_form.html', {'error': 'All fields are required.'})
+
+            # 1. Upload image file to Supabase Storage
+            file_name = f"images/{image_file.name}"  # folder 'image/' inside bucket
+            try:
+                res = supabase.storage.from_("images").upload(file_name, image_file.read())
+            except Exception as e:
+                return render(request, 'word_form.html', {'error': f'Upload failed: {str(e)}'})
+
+            # # 2. Build public URL (no signed URL needed)
+            image_url = f"/storage/v1/object/public/images/{file_name}"
+
+        data = [{
+            "letter_info": {"title": title, "topics":[Onyomi, Kunyomi], "meaning": meaning},
+            "use_cases": use_cases,
+            "image_url": image_url
+        }]
+
+        print(data)
+        result = supabase.table('information_level').insert(data).execute()
+        ServiceLesson(result, 6, lesson_id )
+    return render(request, 'information_level.html', {'path_ids': path_ids, 'lesson_ids': lesson_ids})
+
+def information_level2(request):
+    paths = supabase.table('paths').select("id, title").execute()
+    lessons = supabase.table('lessons').select("id, lesson_title").execute()
+    
+
+    lesson_ids = []
+    for row in lessons.data:
+        title = row.get('lesson_title', str(row['id']))
+        lesson_ids.append({'id': row['id'], 'title': title})
+
+    path_ids = []
+    for row in paths.data:
+        title = row.get('title', str(row['id']))
+        path_ids.append({'id': row['id'], 'title': title})
+
+    if request.method == 'POST':
+        title = request.POST.get('letterTitle')
+        meaning = request.POST.get('letterMeaning')
+        romaji = request.POST.get('romaji')
+        nepali_meaning = request.POST.get('nepali_meaning')
+        nepali_meaning = f'<font="Preeti font  SDF">{nepali_meaning}</font>'  
+        # Onyomi = request.POST.get('topic_0')
+        # Kunyomi = request.POST.get('topic_1')
+        image_file = request.FILES.get('image')
+        
+        path_id = request.POST.get('path_id')
+        lesson_id = request.POST.get('lesson_id')
+
+        use_cases = []
+        usecase_count = 0
+        while True:
+            use_case = request.POST.get(f'option_{usecase_count}')
+            if use_case is None:
+                break
+            use_cases.append(use_case)
+            usecase_count += 1
+        
+
+        # ------uploading the image to supabase bucket
+        image_url = None
+        if image_file:
+            # return render(request, 'word_form.html', {'error': 'All fields are required.'})
+
+            # 1. Upload image file to Supabase Storage
+            file_name = f"images/{image_file.name}"  # folder 'image/' inside bucket
+            try:
+                res = supabase.storage.from_("images").upload(file_name, image_file.read())
+            except Exception as e:
+                return render(request, 'word_form.html', {'error': f'Upload failed: {str(e)}'})
+
+            # # 2. Build public URL (no signed URL needed)
+            image_url = f"/storage/v1/object/public/images/{file_name}"
+
+        data = [{
+            "letter_info": {
+                "title": title,
+                "romaji": romaji,
+                "meaning": meaning,
+                "nepali_meaning": nepali_meaning
+            },
+            "use_cases": use_cases,
+            "image_url": image_url,
+            "title": title,
+        }]
+
+        print(data)
+        result = supabase.table('information_level').insert(data).execute()
+        ServiceLesson(result, 6, lesson_id )
+    return render(request, 'info_level2.html', {'path_ids': path_ids, 'lesson_ids': lesson_ids})
+
+
+def create_meaning_level(request):
+    paths = supabase.table('paths').select("id, title").execute()
+    lessons = supabase.table('lessons').select("id, lesson_title").execute()
+    
+
+    lesson_ids = []
+    for row in lessons.data:
+        title = row.get('lesson_title', str(row['id']))
+        lesson_ids.append({'id': row['id'], 'title': title})
+
+    path_ids = []
+    for row in paths.data:
+        title = row.get('title', str(row['id']))
+        path_ids.append({'id': row['id'], 'title': title})
+
+    if request.method == 'POST':
+        typ = request.POST.get('type')
+        word = request.POST.get('word')
+        meaning = request.POST.get('meaning')
+        structure = request.POST.get('structure')
+        usage = request.POST.get('usage')
+        examples = request.POST.getlist('examples')
+        tips = request.POST.get('tips')
+
+        path_id = request.POST.get('path_id')
+        lesson_id = request.POST.get('lesson_id')
+
+        data = [{
+            "type": typ,
+            "word": word,
+            "meaning": meaning,
+            "structure": structure,
+            "usage": usage,
+            "examples": examples,
+            "tips": tips
+        }]
+
+        print(data)
+        result = supabase.table('meaning_level').insert(data).execute()
+        ServiceLesson(result, 7, lesson_id )
+        return render(request, 'meaning_level.html', {'success': 'Data inserted successfully.', 'path_ids': path_ids, 'lesson_ids': lesson_ids})
+
+    return render(request, 'meaning_level.html', {'path_ids': path_ids, 'lesson_ids': lesson_ids})

@@ -112,7 +112,7 @@
                 <hr class="my-4 border-gray-200">
                 <div class="text-xs uppercase tracking-widest text-gray-400 px-4 mb-2">Create</div>
             </li>
-            <li>
+            {% comment %} <li>
                 <a href="{% url 'create_user' %}"
                    class="nav-link flex items-center p-4 rounded-xl
                    {% if request.resolver_match.url_name == 'create_user' %}
@@ -124,7 +124,7 @@
                 <i class="fas fa-user mr-4 text-lg text-purple-500"></i>
                 <span class="font-medium">User Form</span>
                 </a>
-            </li>
+            </li> {% endcomment %}
             <li>
                 <a href="{% url 'create_path' %}"
                    class="nav-link flex items-center p-4 rounded-xl
@@ -134,11 +134,11 @@
                    text-gray-700 hover:bg-gradient-to-r hover:from-gray-50 hover:to-gray-100 hover:shadow-md
                    {% endif %}
                    transition-all duration-200">
-                <i class="fas fa-chalkboard-teacher mr-4 text-lg text-blue-500"></i>
+                <i class="fas fa-route mr-4 text-lg text-blue-500"></i>
                 <span class="font-medium">Path Form</span>
                 </a>
             </li>
-            <li>
+            {% comment %} <li>
                 <a href="{% url 'create_lesson' %}"
                    class="nav-link flex items-center p-4 rounded-xl
                    {% if request.resolver_match.url_name == 'create_lesson' %}
@@ -149,6 +149,20 @@
                    transition-all duration-200">
                 <i class="fas fa-chalkboard-teacher mr-4 text-lg text-blue-500"></i>
                 <span class="font-medium">Lesson Form</span>
+                </a>
+            </li> {% endcomment %}
+
+            <li>
+                <a href="{% url 'create_letter' %}"
+                   class="nav-link flex items-center p-4 rounded-xl
+                   {% if request.resolver_match.url_name == 'create_letter' %}
+                   bg-gradient-to-r from-green-100 to-green-200 text-green-800 shadow-xl
+                   {% else %}
+                   text-gray-700 hover:bg-gradient-to-r hover:from-gray-50 hover:to-gray-100 hover:shadow-md
+                   {% endif %}
+                   transition-all duration-200">
+                <i class="fas fa-font mr-4 text-lg text-green-500"></i>
+                <span class="font-medium">Letter Tracing</span>
                 </a>
             </li>
             <li>
@@ -162,6 +176,20 @@
                    transition-all duration-200">
                 <i class="fas fa-edit mr-4 text-lg text-purple-500"></i>
                 <span class="font-medium">Quiz Form</span>
+                </a>
+            </li>
+
+            <li>
+                <a href="{% url 'create_word_game' %}"
+                   class="nav-link flex items-center p-4 rounded-xl
+                   {% if request.resolver_match.url_name == 'create_word_game' %}
+                   bg-gradient-to-r from-green-100 to-green-200 text-green-800 shadow-xl
+                   {% else %}
+                   text-gray-700 hover:bg-gradient-to-r hover:from-gray-50 hover:to-gray-100 hover:shadow-md
+                   {% endif %}
+                   transition-all duration-200">
+                <i class="fas fa-puzzle-piece mr-4 text-lg text-green-500"></i>
+                <span class="font-medium">Word Game Form</span>
                 </a>
             </li>
             <li>
@@ -178,6 +206,20 @@
                 </a>
             </li>
             <li>
+                <a href="{% url 'create_word_from_level' %}"
+                   class="nav-link flex items-center p-4 rounded-xl
+                   {% if request.resolver_match.url_name == 'create_word_from_level' %}
+                   bg-gradient-to-r from-green-100 to-green-200 text-green-800 shadow-xl
+                   {% else %}
+                   text-gray-700 hover:bg-gradient-to-r hover:from-gray-50 hover:to-gray-100 hover:shadow-md
+                   {% endif %}
+                   transition-all duration-200">
+                <i class="fas fa-book-open mr-4 text-lg text-green-500"></i>
+                <span class="font-medium">Listening Word Form</span>
+                </a>
+            </li>
+
+            <li>
                 <a href="{% url 'fill_blank' %}"
                    class="nav-link flex items-center p-4 rounded-xl
                    {% if request.resolver_match.url_name == 'fill_blank' %}
@@ -190,17 +232,44 @@
                 <span class="font-medium">Fill Blank</span>
                 </a>
             </li>
+            
             <li>
-                <a href="{% url 'create_word_from_level' %}"
+                <a href="{% url 'information_level' %}"
                    class="nav-link flex items-center p-4 rounded-xl
-                   {% if request.resolver_match.url_name == 'create_word_from_level' %}
+                   {% if request.resolver_match.url_name == 'information_level' %}
                    bg-gradient-to-r from-green-100 to-green-200 text-green-800 shadow-xl
                    {% else %}
                    text-gray-700 hover:bg-gradient-to-r hover:from-gray-50 hover:to-gray-100 hover:shadow-md
                    {% endif %}
                    transition-all duration-200">
-                <i class="fas fa-book-open mr-4 text-lg text-green-500"></i>
-                <span class="font-medium">Word Form</span>
+                <i class="fas fa-info-circle mr-4 text-lg text-green-500"></i>
+                <span class="font-medium">Information Level Kanji</span>
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'information_level2' %}"
+                   class="nav-link flex items-center p-4 rounded-xl
+                   {% if request.resolver_match.url_name == 'information_level2' %}
+                   bg-gradient-to-r from-green-100 to-green-200 text-green-800 shadow-xl
+                   {% else %}
+                   text-gray-700 hover:bg-gradient-to-r hover:from-gray-50 hover:to-gray-100 hover:shadow-md
+                   {% endif %}
+                   transition-all duration-200">
+                <i class="fas fa-info-circle mr-4 text-lg text-green-500"></i>
+                <span class="font-medium">Information Level Normal</span>
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'create_meaning_level' %}"
+                   class="nav-link flex items-center p-4 rounded-xl
+                   {% if request.resolver_match.url_name == 'create_meaning_level' %}
+                   bg-gradient-to-r from-green-100 to-green-200 text-green-800 shadow-xl
+                   {% else %}
+                   text-gray-700 hover:bg-gradient-to-r hover:from-gray-50 hover:to-gray-100 hover:shadow-md
+                   {% endif %}
+                   transition-all duration-200">
+                <i class="fas fa-info-circle mr-4 text-lg text-green-500"></i>
+                <span class="font-medium">Info Level Grammar</span>
                 </a>
             </li>
 
@@ -296,7 +365,7 @@
                    {% endif %}
                    transition-all duration-200">
                 <i class="fas fa-list-ul mr-4 text-lg text-blue-500"></i>
-                <span class="font-medium">Word Form List</span>
+                <span class="font-medium">Listening Word Form List</span>
                 </a>
             </li>
             {% comment %} <li>

@@ -50,36 +50,7 @@
                    placeholder="Enter your learning path title..." required>
         </div>
 
-        <!-- Lesson Selection -->
-        <div class="group">
-            <label class="block text-sm font-semibold text-gray-700 mb-3 flex items-center">
-                <svg class="w-4 h-4 mr-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                </svg>
-                Select Lessons
-            </label>
-            
-            <!-- Custom Multi-Select -->
-            <div class="relative">
-                <select name="lessons" multiple 
-                        class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-gray-800 transition-all duration-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 hover:border-gray-300 focus:outline-none bg-gray-50" 
-                        style="min-height: 200px;" required>
-                    {% for lesson in lessons %}
-                        <option value="{{ lesson.id }}" class="py-3 px-2  hover:bg-blue-100 rounded transition-colors duration-150">
-                            {{forloop.counter}}. {{ lesson.data.lesson_title|default:"Untitled Lesson" }}
-                        </option>
-                    {% endfor %}
-                </select>
-                
-                <!-- Helper Text -->
-                <div class="mt-2 flex items-center text-xs text-gray-500 bg-gray-50 px-3 py-2 rounded-lg">
-                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                    </svg>
-                    Hold <kbd class="px-2 py-1 bg-gray-200 rounded text-xs font-mono">Ctrl</kbd> (Windows) or <kbd class="px-2 py-1 bg-gray-200 rounded text-xs font-mono">⌘</kbd> (Mac) to select multiple lessons
-                </div>
-            </div>
-        </div>
+        
 
         <!-- Submit Button -->
         <div class="pt-4">

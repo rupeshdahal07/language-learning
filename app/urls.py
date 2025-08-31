@@ -25,11 +25,23 @@ urlpatterns = [
 
     path('create-lesson/', views.create_lesson, name='create_lesson'),
     path('create-lesson/list/', views.list_lessons, name='lesson_list'),
+    path('delete_lesson/', views.delete_lesson, name='delete_lesson'),
+    path('lessons/<int:lesson_id>/edit/', views.edit_lesson, name='edit_lesson'),
 
     path('get-level-ids/', views.get_level_ids, name='get_level_ids'),
 
     path('match-the-following/create/', views.create_match_following, name='match_the_following' ),
     path('match-the-following/list/', views.list_match_following, name='match_the_following_list' ),
+
+    path('word-game/create/', views.create_word_game, name='create_word_game'),
+
+    path('letters/create/', views.create_letters, name='create_letter'),
+
+    path('information-level/', views.information_level, name='information_level'),
+    path('information-level2/', views.information_level2, name='information_level2'),
+
+    path('meaning-level/create', views.create_meaning_level, name='create_meaning_level')
+
     
 
 ]
