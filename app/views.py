@@ -158,8 +158,8 @@ def create_path(request):
 
             # Step 2: Create 5 lessons and collect their IDs
             lesson_ids = []
-            lesson_name = ['Conversations','Alphabets', 'Vocabs', 'Grammar', 'Kanji']
-            lesson_type = [1, 2, 4, 8, 16]
+            lesson_name = ['Alphabets', 'Vocabs', 'Kanji', 'Conversations', 'Grammar']
+            lesson_type = [2, 4, 16, 1, 8]
             for i in range(0, 5):
                 lesson_data = {
                     "path_id": path_id,
@@ -210,6 +210,7 @@ def list_paths(request):
             'total_count': 0
         }
     return render(request, 'path_list.html', context)
+
 
 #--------------------Lession-------------------------------------------->>>
 def create_lesson(request):
@@ -384,6 +385,14 @@ def edit_lesson(request, lesson_id):
         return redirect('list_lessons')
 
     return render(request, 'lesson_form.html', {'lesson': lesson})
+
+
+
+def get_lesson(request, id):
+    lessons = supabase.table("lessons").select("*").eq("path_id", id).execute().data
+    # Each lesson in 'lessons' will have its 'id' and other fields
+    return JsonResponse({'lessons': lessons}, safe=False)
+
 #-------------------------lessonEnd--------------------------------->>>>>>>>>>>
 
 
@@ -554,18 +563,19 @@ def create_fill_blank(request):
         # audio_url = f"http://64.227.141.251:8000/storage/v1/object/public/audio/{file_name}"
 
         # ------uploading the image to supabase bucket
-        if not image_file or not options:
-            return render(request, 'word_form.html', {'error': 'All fields are required.'})
+        image_url = None
+        if image_file:
+            # return render(request, 'word_form.html', {'error': 'All fields are required.'})
 
         # 1. Upload image file to Supabase Storage
-        file_name = f"images/{image_file.name}"  # folder 'image/' inside bucket
-        try:
-            res = supabase.storage.from_("images").upload(file_name, image_file.read())
-        except Exception as e:
-            return render(request, 'word_form.html', {'error': f'Upload failed: {str(e)}'})
+            file_name = f"images/{image_file.name}"  # folder 'image/' inside bucket
+            try:
+                res = supabase.storage.from_("images").upload(file_name, image_file.read())
+            except Exception as e:
+                return render(request, 'word_form.html', {'error': f'Upload failed: {str(e)}'})
 
-        # # 2. Build public URL (no signed URL needed)
-        image_url = f"/storage/v1/object/public/images/{file_name}"
+            # # 2. Build public URL (no signed URL needed)
+            image_url = f"/storage/v1/object/public/images/{file_name}"
 
 
         fill_blank = [
@@ -964,6 +974,8 @@ def information_level(request):
     if request.method == 'POST':
         title = request.POST.get('letterTitle')
         meaning = request.POST.get('letterMeaning')
+        if meaning:
+            meaning = re.sub(r"<(.*?)>", r'<font="Preeti font  SDF">\1</font>', meaning)
         Onyomi = request.POST.get('topic_0')
         Kunyomi = request.POST.get('topic_1')
         image_file = request.FILES.get('image')
@@ -1025,6 +1037,8 @@ def information_level2(request):
     if request.method == 'POST':
         title = request.POST.get('letterTitle')
         meaning = request.POST.get('letterMeaning')
+        if meaning:
+            meaning = re.sub(r"<(.*?)>", r'<font="Preeti font  SDF">\1</font>', meaning)
         romaji = request.POST.get('romaji')
         nepali_meaning = request.POST.get('nepali_meaning')
         nepali_meaning = f'<font="Preeti font  SDF">{nepali_meaning}</font>'  

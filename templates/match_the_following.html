@@ -86,7 +86,7 @@
                     <label for="languageType" class="block text-sm font-medium text-gray-700 mb-1">Nepali Side Input Type</label>
                     <select id="languageType" name="language_type" class="px-3 py-2 border border-gray-300 rounded-lg focus:border-green-500 focus:ring-2 focus:ring-green-100 transition-all duration-200 outline-none">
                         <option value="nepali_word">Nepali</option>
-                        <option value="romaji_word">Romaji</option>
+                        <option value="romaji_word">English/Romaji</option>
                     </select>
                 </div>
                 <div id="pairsContainer" class="space-y-4">
@@ -269,4 +269,35 @@ document.getElementById('matchForm').addEventListener('submit', function(e) {
     color: #166534;
 }
 </style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const pathSelect = document.getElementById('path_id');
+    const lessonSelect = document.getElementById('lesson_id');
+
+    pathSelect.addEventListener('change', function() {
+        const pathId = this.value;
+        // Clear current lessons
+        lessonSelect.innerHTML = '<option value="" disabled selected>Loading...</option>';
+        fetch(`/get_lesson/${pathId}/`)
+            .then(response => response.json())
+            .then(data => {
+                lessonSelect.innerHTML = '<option value="" disabled selected>Select a lesson</option>';
+                if (data.lessons && data.lessons.length > 0) {
+                    data.lessons.forEach(lesson => {
+                        const option = document.createElement('option');
+                        option.value = lesson.id;
+                        option.textContent = lesson.lesson_title || lesson.id;
+                        lessonSelect.appendChild(option);
+                    });
+                } else {
+                    lessonSelect.innerHTML = '<option value="" disabled selected>No lessons found</option>';
+                }
+            })
+            .catch(() => {
+                lessonSelect.innerHTML = '<option value="" disabled selected>Error loading lessons</option>';
+            });
+    });
+});
+</script>
 {% endblock content %}

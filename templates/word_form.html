@@ -247,4 +247,36 @@ document.addEventListener('DOMContentLoaded', function() {
     updateOptionNames();
 });
 </script>
+
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const pathSelect = document.getElementById('path_id');
+    const lessonSelect = document.getElementById('lesson_id');
+
+    pathSelect.addEventListener('change', function() {
+        const pathId = this.value;
+        // Clear current lessons
+        lessonSelect.innerHTML = '<option value="" disabled selected>Loading...</option>';
+        fetch(`/get_lesson/${pathId}/`)
+            .then(response => response.json())
+            .then(data => {
+                lessonSelect.innerHTML = '<option value="" disabled selected>Select a lesson</option>';
+                if (data.lessons && data.lessons.length > 0) {
+                    data.lessons.forEach(lesson => {
+                        const option = document.createElement('option');
+                        option.value = lesson.id;
+                        option.textContent = lesson.lesson_title || lesson.id;
+                        lessonSelect.appendChild(option);
+                    });
+                } else {
+                    lessonSelect.innerHTML = '<option value="" disabled selected>No lessons found</option>';
+                }
+            })
+            .catch(() => {
+                lessonSelect.innerHTML = '<option value="" disabled selected>Error loading lessons</option>';
+            });
+    });
+});
+</script>
 {% endblock content %}
