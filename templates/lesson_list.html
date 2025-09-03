@@ -18,7 +18,22 @@
                     <i class="fas fa-plus mr-2"></i>Add New Lesson
                 </a>
             </div>
+
+            <!-- Path Filter Dropdown -->
+            <form method="get" class="flex justify-center mb-4">
+                <label for="path_id" class="mr-2 font-medium text-gray-700">Filter by Path:</label>
+                <select name="path_id" id="path_id" class="rounded-lg border-gray-300 px-4 py-2" onchange="this.form.submit()">
+                    <option value="">All Paths</option>
+                    {% for path in paths %}
+                        <option value="{{ path.id }}" {% if path.id|stringformat:"s" == selected_path_id|stringformat:"s" %}selected{% endif %}>
+                            {{ path.title }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </form>
         </div>
+
+         
 
         <!-- Error Message -->
         {% if error %}

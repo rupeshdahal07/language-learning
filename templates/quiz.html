@@ -2,9 +2,14 @@
 {% block content %}
 <div class="container mx-auto px-4 py-8">
         <div class="max-w-3xl mx-auto bg-white/90 backdrop-blur-sm rounded-3xl shadow-2xl p-8">
-            <h1 class="text-4xl font-bold text-center bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-8">
-                Create Quiz Question
-            </h1>
+            <!-- Add this to the top of your form -->
+            {% if is_edit %}
+                <h2 class="text-2xl font-bold mb-4">Edit Quiz Question</h2>
+            {% else %}
+                <h2 class="text-2xl font-bold mb-4">Create Quiz Question</h2>
+            {% endif %}
+
+
             {% if error %}
             <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-xl mb-4">
                 {{ error }}
@@ -16,7 +21,7 @@
                 {{ success }}
             </div>
         {% endif %}
-            <form id="quizForm" method="POST" action="{% url "quiz" %}" class="space-y-6">
+            <form method="post" action="{% if is_edit %}{% url 'edit_quiz' quiz.id %}{% else %}{% url 'quiz' %}{% endif %}" class="space-y-6">
                 <!-- CSRF Token placeholder - Django will populate this -->
                  {% csrf_token %}
                 <!-- Path Dropdown -->
@@ -78,8 +83,7 @@
                         type="text" 
                         id="titleText" 
                         name="titleText" 
-                        required
-                        value=""
+                        value="{% if is_edit %}{{ quiz.title|default:'' }}{% endif %}" 
                         class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-200 outline-none"
                         placeholder="Enter the question"
                     >
@@ -93,7 +97,7 @@
                         id="questionText" 
                         name="questionText" 
                         required
-                        value=""
+                        value="{% if is_edit %}{{ quiz.data.questionText|default:'' }}{% endif %}" 
                         class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-200 outline-none"
                         placeholder="Enter the question"
                     >
@@ -193,7 +197,7 @@
                     type="submit" 
                     class="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white font-bold py-4 px-6 rounded-xl hover:from-blue-600 hover:to-purple-700 transform hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl"
                 >
-                    Submit Quiz Question
+                    {% if is_edit %}Update Quiz{% else %}Create Quiz{% endif %}
                 </button>
             </form>
             {% include "unicode.html" %}
@@ -295,4 +299,25 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 </script>
+
+<!-- For options, you'll need to add JavaScript to populate them -->
+    {% if is_edit %}
+        <script>
+            // Pre-populate options
+            const options = {{ quiz.data.options|safe }};
+            options.forEach((option, index) => {
+                const optionInput = document.querySelector(`input[name="option_${index}"]`);
+                if (optionInput) {
+                    optionInput.value = option;
+                }
+            });
+            
+            // Set correct option
+            const correctOption = {{ quiz.data.correctOption }};
+            const correctSelect = document.querySelector('select[name="correctOption"]');
+            if (correctSelect) {
+                correctSelect.value = correctOption;
+            }
+        </script>
+    {% endif %}
 {% endblock content %}

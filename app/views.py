@@ -8,6 +8,7 @@ from django.http import JsonResponse
 import json
 from django.contrib.auth.decorators import login_required
 from .helper import wrap_preeti_in_sentence, wrap_preeti_before_parenthesis, quiz_question_wrapper
+import random
 
 def ServiceLesson(result, level_type, lesson_id ):
     if result.data and len(result.data) > 0:
@@ -198,14 +199,26 @@ def list_paths(request):
         # Fetch all paths from Supabase
         response = supabase.table("paths").select("*").order("created_at", desc=True).execute()
         paths = response.data
+        lesson_data = []
+        for path in paths:
+            lessons = path.get('lessons', [])
+            path_lessons = []
+            for lesson_id in lessons:
+                data = supabase.table('lessons').select('*').eq('id', lesson_id).single().execute()
+                if data.data:
+                    path_lessons.append(data.data)
+            lesson_data.append({'path_id': path['id'], 'lessons': path_lessons})
         count = supabase.table("paths").select("id", count="exact").limit(0).execute()
+        
         context = {
             'paths': paths,
+            'lesson_data': lesson_data,  # Changed from 'lessons' to 'lesson_data'
             'total_count': count.count
         }
     except Exception as e:
         context = {
             'paths': [],
+            'lesson_data': [],  # Changed from 'lessons' to 'lesson_data'
             'error': f'Error fetching data: {str(e)}',
             'total_count': 0
         }
@@ -335,22 +348,34 @@ def get_level_ids(request):
     
 def list_lessons(request):
     """
-    View to display all lessons from the database.
+    View to display all lessons from the database, with optional filtering by path.
     """
     try:
-        # Fetch all lessons from Supabase
-        response = supabase.table("lessons").select("*").order("created_at", desc=True).execute()
+        path_id = request.GET.get('path_id')
+        paths_response = supabase.table("paths").select("id, title").order("created_at", desc=True).execute()
+        paths = paths_response.data
+
+        path_id = request.GET.get('path_id')
+        query = supabase.table("lessons").select("*").order("created_at", desc=True)
+        count_query = supabase.table("lessons").select("id", count="exact").limit(0)
+        if path_id:
+            query = query.eq("path_id", path_id)
+            count_query = count_query.eq("path_id", path_id)
+        response = query.execute()
         lessons = response.data
-        count = supabase.table("lessons").select("id", count="exact").limit(0).execute()
+        count = count_query.execute()
         context = {
             'lessons': lessons,
-            'total_count': count.count
+            'total_count': count.count,
+            'selected_path_id': path_id,
+            'paths': paths
         }
     except Exception as e:
         context = {
             'lessons': [],
             'error': f'Error fetching data: {str(e)}',
-            'total_count': 0
+            'total_count': 0,
+            'selected_path_id': path_id if 'path_id' in locals() else None
         }
     return render(request, 'lesson_list.html', context)
 
@@ -953,8 +978,90 @@ def create_letters(request):
     
     return render(request, 'letters_tracing.html', {'path_ids': path_ids, 'lesson_ids': lesson_ids})
 
+def list_letters(request):
+    """
+    View to display all letters from the database with pagination.
+    """
+    try:
+        # Get pagination params
+        page = int(request.GET.get("page", 1))
+        limit = int(request.GET.get("limit", 10))
+        offset = (page - 1) * limit
+
+        # Get search/filter params
+        search = request.GET.get('search', '').strip()
+        collection_id = request.GET.get('collection_id', '').strip()
+
+        # Build query
+        query = supabase.table("letters").select("*").order("created_at", desc=True)
+        count_query = supabase.table("letters").select("id", count="exact").limit(0)
+
+        # Apply filters
+        if search:
+            query = query.ilike("letter_name", f"%{search}%")
+            count_query = count_query.ilike("letter_name", f"%{search}%")
+        
+        if collection_id:
+            query = query.eq("collection_id", collection_id)
+            count_query = count_query.eq("collection_id", collection_id)
+
+        # Apply pagination
+        query = query.range(offset, offset + limit - 1)
+
+        # Execute queries
+        response = query.execute()
+        count_response = count_query.execute()
+
+        letters = response.data
+        total_count = count_response.count
+
+        # Calculate pagination info
+        total_pages = (total_count + limit - 1) // limit
+        has_previous = page > 1
+        has_next = page < total_pages
+
+        context = {
+            'letters': letters,
+            'current_page': page,
+            'total_pages': total_pages,
+            'total_count': total_count,
+            'has_previous': has_previous,
+            'has_next': has_next,
+            'previous_page': page - 1 if has_previous else None,
+            'next_page': page + 1 if has_next else None,
+            'search': search,
+            'collection_id': collection_id,
+            'limit': limit
+        }
+
+    except Exception as e:
+        context = {
+            'letters': [],
+            'error': f'Error fetching data: {str(e)}',
+            'current_page': 1,
+            'total_pages': 0,
+            'total_count': 0,
+            'has_previous': False,
+            'has_next': False,
+            'search': '',
+            'collection_id': '',
+            'limit': 10
+        }
+
+    return render(request, 'lists/list_letters.html', context)
 
 
+
+def delete_letter(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            letter_id = data.get('id')
+            supabase.table("letters").delete().eq("id", letter_id).execute()
+            return JsonResponse({'success': True})
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)})
+    return JsonResponse({'success': False, 'error': 'Invalid request'}, status=400)
 
 def information_level(request):
     paths = supabase.table('paths').select("id, title").execute()
@@ -1135,3 +1242,433 @@ def create_meaning_level(request):
         return render(request, 'meaning_level.html', {'success': 'Data inserted successfully.', 'path_ids': path_ids, 'lesson_ids': lesson_ids})
 
     return render(request, 'meaning_level.html', {'path_ids': path_ids, 'lesson_ids': lesson_ids})
+
+
+def create_rearrange(request):
+    paths = supabase.table('paths').select("id, title").execute()
+    lessons = supabase.table('lessons').select("id, lesson_title").execute()
+    
+    lesson_ids = []
+    for row in lessons.data:
+        title = row.get('lesson_title', str(row['id']))
+        lesson_ids.append({'id': row['id'], 'title': title})
+
+    path_ids = []
+    for row in paths.data:
+        title = row.get('title', str(row['id']))
+        path_ids.append({'id': row['id'], 'title': title})
+
+    if request.method == 'POST':
+        path_id = request.POST.get('path_id')
+        lesson_id = request.POST.get('lesson_id')
+        
+        # Answer data
+        answer_nepali = request.POST.get('answer_nepali')
+        answer_romaji = request.POST.get('answer_romaji')
+        answer_english = request.POST.get('answer_english')
+        answer_japanese = request.POST.get('answer_japanese')
+        
+        # Format Nepali text with Preeti font
+        if answer_nepali:
+            answer_nepali = f'<font="Preeti font  SDF">{answer_nepali}</font>'
+        
+        # Collect romaji question words
+        romaji_words = []
+        romaji_index = 0
+        while True:
+            word = request.POST.get(f'romaji_word_{romaji_index}')
+            if word is None:
+                break
+            if word.strip():
+                romaji_words.append(word.strip())
+            romaji_index += 1
+        random.shuffle(romaji_words)
+        
+        # Collect Japanese question words
+        japanese_words = []
+        japanese_index = 0
+        while True:
+            word = request.POST.get(f'japanese_word_{japanese_index}')
+            if word is None:
+                break
+            if word.strip():
+                japanese_words.append(word.strip())
+            japanese_index += 1
+        random.shuffle(japanese_words)
+
+        # Validate required fields
+        if not all([answer_romaji, answer_english, answer_japanese]) or not romaji_words or not japanese_words:
+            return render(request, 'rearrange.html', {
+                'error': 'All fields are required.',
+                'path_ids': path_ids,
+                'lesson_ids': lesson_ids
+            })
+        
+        # Create rearrange data structure
+        rearrange_data = [{
+            
+                "answer": {
+                    "nepali": answer_nepali,
+                    "romaji": answer_romaji,
+                    "english": answer_english,
+                    "japanese": answer_japanese
+                },
+                "question": {
+                    "romaji": romaji_words,
+                    "japanese": japanese_words
+                },
+                "title": answer_english  # Using English as title
+            
+        }]
+        
+        print("Rearrange Data:", rearrange_data)
+        
+        try:
+            result = supabase.table("rearrange_words_level").insert(rearrange_data).execute()
+            ServiceLesson(result, 9, lesson_id)  # Assuming level_type 9 for rearrange
+            return render(request, 'rearrange.html', {
+                'success': 'Rearrange exercise created successfully!',
+                'path_ids': path_ids,
+                'lesson_ids': lesson_ids
+            })
+        except Exception as e:
+            return render(request, 'rearrange.html', {
+                'error': f'Error creating exercise: {str(e)}',
+                'path_ids': path_ids,
+                'lesson_ids': lesson_ids
+            })
+    
+    return render(request, 'rearrange.html', {'path_ids': path_ids, 'lesson_ids': lesson_ids})
+
+
+
+
+# Add these edit views to your existing views.py file
+
+def edit_quiz(request, quiz_id):
+    """Edit quiz question"""
+    try:
+        # Fetch existing quiz
+        quiz_response = supabase.table("quiz_levels").select("*").eq("id", quiz_id).single().execute()
+        quiz = quiz_response.data
+        
+        # Get paths and lessons for dropdowns
+        paths = supabase.table('paths').select("id, title").execute()
+        lessons = supabase.table('lessons').select("id, lesson_title").execute()
+        
+        lesson_ids = [{'id': row['id'], 'title': row.get('lesson_title', str(row['id']))} for row in lessons.data]
+        path_ids = [{'id': row['id'], 'title': row.get('title', str(row['id']))} for row in paths.data]
+        
+        if request.method == 'POST':
+            question_text = request.POST.get('questionText')
+            correct_option = int(request.POST.get('correctOption'))
+            question_type = request.POST.get('languagePair')
+            title_text = request.POST.get('titleText')
+
+            # Collect options
+            options = []
+            option_index = 0
+            while True:
+                opt = request.POST.get(f'option_{option_index}')
+                if opt is None:
+                    break
+                options.append(wrap_preeti_in_sentence(opt))
+                option_index += 1
+
+            # Apply text formatting based on type
+            if question_type == 'english_nepali':
+                question_text = re.sub(r"<(.*?)>", r'<font="Preeti font  SDF">\1</font>', question_text)
+            elif question_type == 'nepali':
+                question_text = f'<font="Preeti font  SDF">{question_text}</font>'
+
+            # Update quiz data
+            quiz_data = {
+                "data": {
+                    "questionText": question_text,
+                    "options": options,
+                    "correctOption": correct_option,
+                },
+                "title": title_text
+            }
+
+            supabase.table("quiz_levels").update(quiz_data).eq("id", quiz_id).execute()
+            return redirect('list_quiz_questions')
+
+        context = {
+            'quiz': quiz,
+            'path_ids': path_ids,
+            'lesson_ids': lesson_ids,
+            'is_edit': True
+        }
+        return render(request, 'quiz.html', context)
+        
+    except Exception as e:
+        return render(request, 'quiz.html', {'error': f'Quiz not found: {str(e)}'})
+
+def edit_fill_blank(request, fill_blank_id):
+    """Edit fill blank question"""
+    try:
+        # Fetch existing fill blank
+        fill_blank_response = supabase.table("fill_blanks_level").select("*").eq("id", fill_blank_id).single().execute()
+        fill_blank = fill_blank_response.data
+        
+        # Get paths and lessons for dropdowns
+        paths = supabase.table('paths').select("id, title").execute()
+        lessons = supabase.table('lessons').select("id, lesson_title").execute()
+        
+        lesson_ids = [{'id': row['id'], 'title': row.get('lesson_title', str(row['id']))} for row in lessons.data]
+        path_ids = [{'id': row['id'], 'title': row.get('title', str(row['id']))} for row in paths.data]
+        
+        if request.method == 'POST':
+            question_text = request.POST.get('questionText')
+            correct_option = request.POST.get('correctOption')
+            image_file = request.FILES.get('image')
+
+            options = []
+            option_index = 0
+            while True:
+                opt = request.POST.get(f'option_{option_index}')
+                if opt is None:
+                    break
+                options.append(opt)
+                option_index += 1
+
+            letter_title = request.POST.get('letterTitle')
+            topics = [request.POST.get('topic_0')]
+            meaning = request.POST.get('letterMeaning')
+            if meaning:
+                meaning = re.sub(r"<(.*?)>", r'<font="Preeti font  SDF">\1</font>', meaning)
+
+            # Handle image upload
+            image_url = fill_blank.get('imageUrl')  # Keep existing image if no new one
+            if image_file:
+                file_name = f"images/{image_file.name}"
+                try:
+                    supabase.storage.from_("images").upload(file_name, image_file.read())
+                    image_url = f"/storage/v1/object/public/images/{file_name}"
+                except Exception as e:
+                    return render(request, 'fill_blank.html', {'error': f'Upload failed: {str(e)}'})
+
+            # Update fill blank data
+            fill_blank_data = {
+                "data": {
+                    "questionText": question_text,
+                    "options": options,
+                    "correctOption": int(correct_option),
+                },
+                "letter_info": {
+                    "title": letter_title,
+                    "topics": topics,
+                    "meaning": meaning,
+                },
+                "imageUrl": image_url,
+                "title": question_text
+            }
+
+            supabase.table("fill_blanks_level").update(fill_blank_data).eq("id", fill_blank_id).execute()
+            return redirect('list_fill_blanks')
+
+        context = {
+            'fill_blank': fill_blank,
+            'path_ids': path_ids,
+            'lesson_ids': lesson_ids,
+            'is_edit': True
+        }
+        return render(request, 'fill_blank.html', context)
+        
+    except Exception as e:
+        return render(request, 'fill_blank.html', {'error': f'Fill blank not found: {str(e)}'})
+
+def edit_word_form(request, word_form_id):
+    """Edit word form level"""
+    try:
+        # Fetch existing word form
+        word_form_response = supabase.table("word_form_levels").select("*").eq("id", word_form_id).single().execute()
+        word_form = word_form_response.data
+        
+        # Get paths and lessons for dropdowns
+        paths = supabase.table('paths').select("id, title").execute()
+        lessons = supabase.table('lessons').select("id, lesson_title").execute()
+        
+        lesson_ids = [{'id': row['id'], 'title': row.get('lesson_title', str(row['id']))} for row in lessons.data]
+        path_ids = [{'id': row['id'], 'title': row.get('title', str(row['id']))} for row in paths.data]
+        
+        if request.method == 'POST':
+            audio_file = request.FILES.get('audioFile')
+            nepali_sound = request.POST.get('sound')
+
+            if nepali_sound:
+                nepali_sound = f'<font="Preeti font SDF">{nepali_sound}</font>'
+
+            letter_1 = request.POST.get('letter_1')
+            letter_2 = request.POST.get('letter_2')
+            answer = []
+            if letter_1 and letter_2:
+                answer = [letter_1, letter_2]
+            elif letter_1:
+                answer = [letter_1]
+
+            # Collect options
+            options = []
+            option_index = 0
+            while True:
+                opt = request.POST.get(f'option_{option_index}')
+                if opt is None:
+                    break
+                options.append(opt)
+                option_index += 1
+
+            # Handle audio upload
+            audio_url = word_form.get('audioUrl')  # Keep existing audio if no new one
+            if audio_file:
+                file_name = f"audio/{audio_file.name}"
+                try:
+                    supabase.storage.from_("audio").upload(file_name, audio_file.read())
+                    audio_url = f"/storage/v1/object/public/audio/{file_name}"
+                except Exception as e:
+                    return render(request, 'word_form.html', {'error': f'Upload failed: {str(e)}'})
+
+            # Update word form data
+            word_data = {
+                "audioUrl": audio_url,
+                "answer": answer,
+                "options": options,
+                "sound": nepali_sound
+            }
+
+            supabase.table("word_form_levels").update(word_data).eq("id", word_form_id).execute()
+            return redirect('list_word_form_levels')
+
+        context = {
+            'word_form': word_form,
+            'path_ids': path_ids,
+            'lesson_ids': lesson_ids,
+            'is_edit': True
+        }
+        return render(request, 'word_form.html', context)
+        
+    except Exception as e:
+        return render(request, 'word_form.html', {'error': f'Word form not found: {str(e)}'})
+
+def edit_match_following(request, match_id):
+    """Edit match the following exercise"""
+    try:
+        # Fetch existing match exercise
+        match_response = supabase.table("match_the_following_level").select("*").eq("id", match_id).single().execute()
+        match_exercise = match_response.data
+        
+        # Get paths and lessons for dropdowns
+        paths = supabase.table('paths').select("id, title").execute()
+        lessons = supabase.table('lessons').select("id, lesson_title").execute()
+        
+        lesson_ids = [{'id': row['id'], 'title': row.get('lesson_title', str(row['id']))} for row in lessons.data]
+        path_ids = [{'id': row['id'], 'title': row.get('title', str(row['id']))} for row in paths.data]
+        
+        if request.method == 'POST':
+            # Collect all the pairs
+            match_pairs = []
+            pair_index = 0
+            word_type = request.POST.get('language_type')
+            
+            while True:
+                nepali_key = f'nepali_{pair_index}'
+                japanese_key = f'japanese_{pair_index}'
+                
+                nepali_value = request.POST.get(nepali_key)
+                japanese_value = request.POST.get(japanese_key)
+                
+                if not nepali_value and not japanese_value:
+                    break
+                    
+                if nepali_value and japanese_value:
+                    if word_type == 'nepali_word':
+                        nepali_value = f'<font face="Preeti font  SDF">{nepali_value.strip()}</font>'
+
+                    pair_dict = {
+                        "nepali": nepali_value,
+                        "japanese": japanese_value.strip()
+                    }
+                    match_pairs.append(pair_dict)
+                
+                pair_index += 1
+            
+            # Update match data
+            match_data = {
+                "data": match_pairs,
+                "title": request.POST.get('titleText')
+            }
+            
+            supabase.table("match_the_following_level").update(match_data).eq("id", match_id).execute()
+            return redirect('list_match_following')
+
+        context = {
+            'match_exercise': match_exercise,
+            'path_ids': path_ids,
+            'lesson_ids': lesson_ids,
+            'is_edit': True
+        }
+        return render(request, 'match_the_following.html', context)
+        
+    except Exception as e:
+        return render(request, 'match_the_following.html', {'error': f'Match exercise not found: {str(e)}'})
+
+def edit_letter(request, letter_id):
+    """Edit letter"""
+    try:
+        # Fetch existing letter
+        letter_response = supabase.table("letters").select("*").eq("id", letter_id).single().execute()
+        letter = letter_response.data
+        
+        # Get paths and lessons for dropdowns
+        paths = supabase.table('paths').select("id, title").execute()
+        lessons = supabase.table('lessons').select("id, lesson_title").execute()
+        
+        lesson_ids = [{'id': row['id'], 'title': row.get('lesson_title', str(row['id']))} for row in lessons.data]
+        path_ids = [{'id': row['id'], 'title': row.get('title', str(row['id']))} for row in paths.data]
+        
+        if request.method == 'POST':
+            english_letter = request.POST.get('letter_name')
+            nepali_letter = request.POST.get('nepali_letter')
+            japanese_letter = request.POST.get('japanese_letter')
+            letter_collection = request.POST.get('japanese_character_type')
+            audio_file = request.FILES.get('audio')
+
+            onyomi = request.POST.get('onyomi')
+            kunyomi = request.POST.get('kunyomi')
+
+            if nepali_letter:
+                nepali_letter = f'<font="Preeti font  SDF">{nepali_letter}</font>'
+
+            # Handle audio upload
+            audio_url = letter.get('audio')  # Keep existing audio if no new one
+            if audio_file:
+                file_name = f"audio/{audio_file.name}"
+                try:
+                    supabase.storage.from_("audio").upload(file_name, audio_file.read())
+                    audio_url = f"/storage/v1/object/public/audio/{file_name}"
+                except Exception as e:
+                    return render(request, 'letters_tracing.html', {'error': f'Upload failed: {str(e)}'})
+
+            # Update letter data
+            data = {
+                'collection_id': letter_collection,
+                'letter_name': english_letter,
+                'nepali_text': nepali_letter,
+                'japanese_text': japanese_letter,
+                'letter_info': {'onyomi': onyomi, 'kunyomi': kunyomi},
+                'audio': audio_url,
+            }
+
+            supabase.table('letters').update(data).eq("id", letter_id).execute()
+            return redirect('list_letters')
+
+        context = {
+            'letter': letter,
+            'path_ids': path_ids,
+            'lesson_ids': lesson_ids,
+            'is_edit': True
+        }
+        return render(request, 'letters_tracing.html', context)
+        
+    except Exception as e:
+        return render(request, 'letters_tracing.html', {'error': f'Letter not found: {str(e)}'})

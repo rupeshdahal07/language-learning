@@ -1,0 +1,236 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="max-w-6xl mx-auto">
+        <!-- Header -->
+        <div class="bg-white/90 backdrop-blur-sm rounded-3xl shadow-2xl p-8 mb-6">
+            <h1 class="text-4xl font-bold text-center bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-4">
+                Letters Collection
+            </h1>
+            {% if total_count %}
+                <p class="text-center text-gray-600">Total Letters: {{ total_count }}</p>
+            {% endif %}
+            
+            <!-- Add New Letter Button -->
+            <div class="text-center mt-4">
+                <a href="{% url 'create_letter' %}" 
+                   class="inline-block bg-gradient-to-r from-green-500 to-blue-600 text-white font-bold py-3 px-6 rounded-xl hover:from-green-600 hover:to-blue-700 transform hover:scale-105 transition-all duration-200 shadow-lg">
+                    <i class="fas fa-plus mr-2"></i>Add New Letter
+                </a>
+            </div>
+
+            <!-- Search and Filter -->
+            <form method="get" class="flex flex-wrap justify-center gap-6 mt-8 bg-white/80 rounded-xl shadow p-6">
+                <div class="flex flex-col min-w-[180px]">
+                    <label for="search" class="text-sm font-semibold text-gray-700 mb-1">🔍 Search Letters</label>
+                    <input type="text" name="search" id="search" value="{{ search }}" 
+                        placeholder="e.g. あ, ka, etc." 
+                        class="rounded-lg border border-gray-300 px-4 py-2 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition w-full" />
+                </div>
+                
+                <div class="flex flex-col min-w-[180px]">
+                    <label for="collection_id" class="text-sm font-semibold text-gray-700 mb-1">📚 Collection</label>
+                    <select name="collection_id" id="collection_id" class="rounded-lg border border-gray-300 px-4 py-2 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition w-full">
+                        <option value="">All Collections</option>
+                        <option value="1" {% if collection_id == "1" %}selected{% endif %}>Hiragana</option>
+                        <option value="2" {% if collection_id == "2" %}selected{% endif %}>Katakana</option>
+                        <option value="3" {% if collection_id == "3" %}selected{% endif %}>Kanji</option>
+                    </select>
+                </div>
+                
+                <div class="flex flex-col min-w-[120px]">
+                    <label for="limit" class="text-sm font-semibold text-gray-700 mb-1">📄 Per Page</label>
+                    <select name="limit" id="limit" class="rounded-lg border border-gray-300 px-4 py-2 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition w-full">
+                        <option value="10" {% if limit == 10 %}selected{% endif %}>10</option>
+                        <option value="20" {% if limit == 20 %}selected{% endif %}>20</option>
+                        <option value="50" {% if limit == 50 %}selected{% endif %}>50</option>
+                    </select>
+                </div>
+                
+                <div class="flex items-end">
+                    <button type="submit" class="bg-gradient-to-r from-blue-500 to-purple-600 text-white font-bold px-8 py-2 rounded-lg shadow hover:from-blue-600 hover:to-purple-700 transition-all flex items-center gap-2">
+                        <i class="fas fa-search"></i> Search
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Error Message -->
+        {% if error %}
+            <div class="bg-red-100 border-l-4 border-red-500 text-red-700 px-6 py-4 rounded-xl mb-6 shadow-lg">
+                <div class="flex items-center">
+                    <i class="fas fa-exclamation-triangle mr-3 text-red-500"></i>
+                    <span class="font-medium">{{ error }}</span>
+                </div>
+            </div>
+        {% endif %}
+
+        <!-- Letters Grid -->
+        {% if letters %}
+            <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+                {% for letter in letters %}
+                    <div class="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all duration-300 overflow-hidden group">
+                        <!-- Letter Header -->
+                        <div class="bg-gradient-to-r from-blue-500 to-purple-600 p-6 text-white">
+                            <div class="flex justify-between items-center">
+                                <div class="text-center flex-1">
+                                    <h3 class="text-3xl font-bold mb-2">{{ letter.japanese_text|default:"N/A" }}</h3>
+                                    <p class="text-blue-100">{{ letter.letter_name|default:"Unknown" }}</p>
+                                </div>
+                                {% if letter.audio %}
+                                    <button onclick="playAudio('{{ letter.audio }}')" 
+                                            class="bg-white/20 hover:bg-white/30 rounded-full p-2 transition-colors">
+                                        <i class="fas fa-volume-up text-white"></i>
+                                    </button>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Letter Content -->
+                        <div class="p-6">
+                            <div class="space-y-3">
+                                {% if letter.nepali_text %}
+                                    <div>
+                                        <span class="font-semibold text-gray-700">Nepali:</span>
+                                        <span class="text-gray-600">{{ letter.nepali_text|safe }}</span>
+                                    </div>
+                                {% endif %}
+                                
+                                {% if letter.letter_info.onyomi %}
+                                    <div>
+                                        <span class="font-semibold text-gray-700">On'yomi:</span>
+                                        <span class="text-gray-600">{{ letter.letter_info.onyomi }}</span>
+                                    </div>
+                                {% endif %}
+                                
+                                {% if letter.letter_info.kunyomi %}
+                                    <div>
+                                        <span class="font-semibold text-gray-700">Kun'yomi:</span>
+                                        <span class="text-gray-600">{{ letter.letter_info.kunyomi }}</span>
+                                    </div>
+                                {% endif %}
+                                
+                                <div>
+                                    <span class="font-semibold text-gray-700">Collection:</span>
+                                    <span class="inline-block bg-blue-100 text-blue-700 text-xs font-bold px-2 py-1 rounded-full">
+                                        {% if letter.collection_id == 1 %}Hiragana
+                                        {% elif letter.collection_id == 2 %}Katakana
+                                        {% elif letter.collection_id == 3 %}Kanji
+                                        {% else %}Unknown{% endif %}
+                                    </span>
+                                </div>
+                                
+                                <div class="text-xs text-gray-400">
+                                    Created: {{ letter.created_at|date:"M d, Y" }}
+                                </div>
+                            </div>
+
+                            <!-- Action Buttons -->
+                            <div class="flex justify-end mt-4 space-x-2">
+                                <a href="{% url 'edit_letter' letter.id %}" class="px-4 py-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors text-sm font-medium">
+                                    <i class="fas fa-edit mr-1"></i>Edit
+                                </a>
+                                <button class="px-4 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors text-sm font-medium delete-letter-btn" 
+                                        data-letter-id="{{ letter.id }}">
+                                    <i class="fas fa-trash mr-1"></i>Delete
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+
+            <!-- Pagination -->
+            {% if total_pages > 1 %}
+                <div class="flex justify-center mt-8">
+                    <nav class="flex items-center space-x-2">
+                        {% if has_previous %}
+                            <a href="?page={{ previous_page }}&search={{ search }}&collection_id={{ collection_id }}&limit={{ limit }}" 
+                               class="px-3 py-2 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors">
+                                <i class="fas fa-chevron-left"></i>
+                            </a>
+                        {% endif %}
+
+                        {% for page_num in total_pages|make_list %}
+                            {% if page_num|add:0 == current_page %}
+                                <span class="px-3 py-2 bg-blue-500 text-white rounded-md">{{ page_num }}</span>
+                            {% else %}
+                                <a href="?page={{ page_num }}&search={{ search }}&collection_id={{ collection_id }}&limit={{ limit }}" 
+                                   class="px-3 py-2 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors">
+                                    {{ page_num }}
+                                </a>
+                            {% endif %}
+                        {% endfor %}
+
+                        {% if has_next %}
+                            <a href="?page={{ next_page }}&search={{ search }}&collection_id={{ collection_id }}&limit={{ limit }}" 
+                               class="px-3 py-2 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors">
+                                <i class="fas fa-chevron-right"></i>
+                            </a>
+                        {% endif %}
+                    </nav>
+                </div>
+
+                <div class="text-center mt-4 text-gray-600">
+                    Showing {{ letters|length }} of {{ total_count }} letters (Page {{ current_page }} of {{ total_pages }})
+                </div>
+            {% endif %}
+
+        {% else %}
+            <div class="text-center py-16">
+                <div class="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl p-12">
+                    <div class="text-gray-400 mb-6">
+                        <i class="fas fa-font text-6xl"></i>
+                    </div>
+                    <h3 class="text-2xl font-semibold text-gray-700 mb-4">No Letters Found</h3>
+                    <p class="text-gray-500 mb-6 max-w-md mx-auto">
+                        Start building your language collection by adding letters, characters, or symbols.
+                    </p>
+                    <a href="{% url 'create_letters' %}" 
+                       class="inline-block bg-gradient-to-r from-blue-500 to-purple-600 text-white font-bold py-3 px-8 rounded-xl hover:from-blue-600 hover:to-purple-700 transform hover:scale-105 transition-all duration-200 shadow-lg">
+                        <i class="fas fa-plus mr-2"></i>Create First Letter
+                    </a>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+// Audio playback function
+function playAudio(audioUrl) {
+    const audio = new Audio(audioUrl);
+    audio.play().catch(e => console.log('Audio play failed:', e));
+}
+
+// Delete letter functionality
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.delete-letter-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            if (!confirm('Are you sure you want to delete this letter?')) return;
+            
+            const letterId = this.getAttribute('data-letter-id');
+            
+            fetch(`/delete-letter/`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": "{{ csrf_token }}"
+                },
+                body: JSON.stringify({ id: letterId })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    this.closest('.bg-white\\/90').remove();
+                    location.reload(); // Refresh to update pagination
+                } else {
+                    alert(data.error || 'Delete failed');
+                }
+            })
+            .catch(() => alert('Delete failed'));
+        });
+    });
+});
+</script>
+{% endblock content %}

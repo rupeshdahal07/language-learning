@@ -3,7 +3,7 @@
 <div class="container mx-auto px-4 py-8">
         <div class="max-w-3xl mx-auto bg-white/90 backdrop-blur-sm rounded-3xl shadow-2xl p-8">
             <h1 class="text-4xl font-bold text-center bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-8">
-                Create Letters
+                {% if is_edit %}Edit Letter{% else %}Create Letter{% endif %}
             </h1>
             {% if error %}
             <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-xl mb-4">
@@ -17,9 +17,12 @@
                 </div>
             {% endif %}
             
-            <form id="quizForm" method="POST" action="{% url "create_letter" %}" enctype="multipart/form-data" class="space-y-6">
-                <!-- CSRF Token placeholder - Django will populate this -->
+            <form id="letterForm" method="POST" 
+                  action="{% if is_edit %}{% url 'edit_letter' letter.id %}{% else %}{% url 'create_letter' %}{% endif %}" 
+                  enctype="multipart/form-data" class="space-y-6">
+                <!-- CSRF Token -->
                  {% csrf_token %}
+                 
                 <!-- Path Dropdown -->
                 <div>
                     <label for="path_id" class="block text-sm font-semibold text-gray-700 mb-2">
@@ -31,12 +34,17 @@
                         required
                         class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-200 outline-none"
                     >
-                        <option value="" disabled selected>Select a path</option>
+                        <option value="" disabled {% if not is_edit %}selected{% endif %}>Select a path</option>
                         {% for path in path_ids %}
-                            <option value="{{ path.id }}">{{ path.title }}</option>
+                            <option value="{{ path.id }}" 
+                                    {% if is_edit and letter.path_id == path.id %}selected{% endif %}>
+                                {{ path.title }}
+                            </option>
                         {% endfor %}
                     </select>
                 </div>
+                
+                <!-- Lesson Dropdown -->
                 <div>
                     <label for="lesson_id" class="block text-sm font-semibold text-gray-700 mb-2">
                         Lessons
@@ -47,12 +55,17 @@
                         required
                         class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-200 outline-none"
                     >
-                        <option value="" disabled selected>Select a lesson</option>
+                        <option value="" disabled {% if not is_edit %}selected{% endif %}>Select a lesson</option>
                         {% for lesson in lesson_ids %}
-                            <option value="{{ lesson.id }}">{{ lesson.title }}</option>
+                            <option value="{{ lesson.id }}" 
+                                    {% if is_edit and letter.lesson_id == lesson.id %}selected{% endif %}>
+                                {{ lesson.title }}
+                            </option>
                         {% endfor %}
                     </select>
                 </div>
+                
+                <!-- Japanese Character Type -->
                 <div>
                     <label for="japanese_character_type" class="block text-sm font-semibold text-gray-700 mb-2">
                         Japanese Character Type
@@ -64,12 +77,13 @@
                         class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-200 outline-none"
                     >
                         <option value="">Select character type</option>
-                        <option value="1">Hiragana</option>
-                        <option value="2">Katakana</option>
-                        <option value="3">Kanji</option>
+                        <option value="1" {% if is_edit and letter.collection_id == 1 %}selected{% endif %}>Hiragana</option>
+                        <option value="2" {% if is_edit and letter.collection_id == 2 %}selected{% endif %}>Katakana</option>
+                        <option value="3" {% if is_edit and letter.collection_id == 3 %}selected{% endif %}>Kanji</option>
                     </select>
                 </div>
 
+                <!-- Onyomi and Kunyomi -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                         <label for="onyomi" class="block text-sm font-semibold text-gray-700 mb-2">
@@ -79,7 +93,7 @@
                             type="text" 
                             id="onyomi" 
                             name="onyomi" 
-                            value=""
+                            value="{% if is_edit %}{{ letter.letter_info.onyomi|default:'' }}{% endif %}"
                             class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-200 outline-none"
                             placeholder="Enter Onyomi reading"
                         >
@@ -92,28 +106,30 @@
                             type="text" 
                             id="kunyomi" 
                             name="kunyomi" 
-                            value=""
+                            value="{% if is_edit %}{{ letter.letter_info.kunyomi|default:'' }}{% endif %}"
                             class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-200 outline-none"
                             placeholder="Enter Kunyomi reading"
                         >
                     </div>
                 </div>
 
+                <!-- Japanese Letter -->
                 <div>
                     <label for="japanese_letter" class="block text-sm font-semibold text-gray-700 mb-2">
-                        Japanese Name 
+                        Japanese Character
                     </label>
                     <input 
                         type="text" 
                         id="japanese_letter" 
                         name="japanese_letter" 
                         required
-                        value=""
+                        value="{% if is_edit %}{{ letter.japanese_text|default:'' }}{% endif %}"
                         class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-200 outline-none"
-                        placeholder="Enter Japanese letter"
+                        placeholder="Enter Japanese character (e.g., あ, カ, 水)"
                     >
                 </div>
 
+                <!-- Letter Name (English) -->
                 <div>
                     <label for="letter_name" class="block text-sm font-semibold text-gray-700 mb-2">
                         Letter Name (English)
@@ -123,49 +139,72 @@
                         id="letter_name" 
                         name="letter_name" 
                         required
-                        value=""
+                        value="{% if is_edit %}{{ letter.letter_name|default:'' }}{% endif %}"
                         class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-200 outline-none"
-                        placeholder="Enter letter"
+                        placeholder="Enter romanized pronunciation (e.g., a, ka, mizu)"
                     >
                 </div>
 
+                <!-- Nepali Letter -->
                 <div>
                     <label for="nepali_letter" class="block text-sm font-semibold text-gray-700 mb-2">
-                        Nepali Letter
+                        Nepali Translation
                     </label>
                     <input 
                         type="text" 
                         id="nepali_letter" 
                         name="nepali_letter" 
                         required
-                        value=""
+                        value="{% if is_edit %}{{ letter.nepali_text|striptags|default:'' }}{% endif %}"
                         class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-200 outline-none"
-                        placeholder="Enter nepali letter"
+                        placeholder="Enter Nepali translation"
                     >
                 </div>
+                
+                <!-- Audio File -->
                 <div>
                     <label for="audio" class="block text-sm font-semibold text-gray-700 mb-2">
                         Audio File <span class="text-xs text-gray-400">(optional)</span>
                     </label>
+                    {% if is_edit and letter.audio %}
+                        <div class="mb-2 p-3 bg-blue-50 rounded-lg">
+                            <p class="text-sm text-blue-700 mb-2">Current audio file:</p>
+                            <audio controls class="w-full mb-2">
+                                <source src="{{ letter.audio }}" type="audio/mpeg">
+                                Your browser does not support the audio element.
+                            </audio>
+                            <p class="text-xs text-gray-600">Choose a new file to replace the current audio</p>
+                        </div>
+                    {% endif %}
                     <input 
                         type="file" 
                         id="audio" 
                         name="audio" 
                         accept="audio/*"
+                        
                         class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-200 outline-none"
                     >
                 </div>
+                
+                <!-- Submit Button -->
                 <button 
                     type="submit" 
                     class="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white font-bold py-4 px-6 rounded-xl hover:from-blue-600 hover:to-purple-700 transform hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl"
                 >
-                    Submit Quiz Question
+                    <i class="fas fa-{% if is_edit %}save{% else %}plus{% endif %} mr-2"></i>
+                    {% if is_edit %}Update Letter{% else %}Create Letter{% endif %}
                 </button>
+                
+                {% if is_edit %}
+                    <a href="{% url 'list_letters' %}" 
+                       class="w-full block text-center bg-gray-500 text-white font-bold py-4 px-6 rounded-xl hover:bg-gray-600 transition-all duration-200 shadow-lg">
+                        <i class="fas fa-times mr-2"></i>Cancel
+                    </a>
+                {% endif %}
             </form>
             {% include "unicode.html" %}
         </div>
     </div>
-
 
     <script>
 document.addEventListener('DOMContentLoaded', function() {
@@ -176,6 +215,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const pathId = this.value;
         // Clear current lessons
         lessonSelect.innerHTML = '<option value="" disabled selected>Loading...</option>';
+        
         fetch(`/get_lesson/${pathId}/`)
             .then(response => response.json())
             .then(data => {
@@ -195,6 +235,30 @@ document.addEventListener('DOMContentLoaded', function() {
                 lessonSelect.innerHTML = '<option value="" disabled selected>Error loading lessons</option>';
             });
     });
+
+    {% if is_edit %}
+    // Pre-populate lessons for edit mode
+    const selectedPathId = pathSelect.value;
+    const selectedLessonId = '{{ letter.lesson_id }}';
+    
+    if (selectedPathId) {
+        fetch(`/get_lesson/${selectedPathId}/`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.lessons && data.lessons.length > 0) {
+                    data.lessons.forEach(lesson => {
+                        const option = document.createElement('option');
+                        option.value = lesson.id;
+                        option.textContent = lesson.lesson_title || lesson.id;
+                        if (lesson.id == selectedLessonId) {
+                            option.selected = true;
+                        }
+                        lessonSelect.appendChild(option);
+                    });
+                }
+            });
+    }
+    {% endif %}
 });
 </script>
 {% endblock content %}

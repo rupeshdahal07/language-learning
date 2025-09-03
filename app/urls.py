@@ -37,12 +37,20 @@ urlpatterns = [
     path('word-game/create/', views.create_word_game, name='create_word_game'),
 
     path('letters/create/', views.create_letters, name='create_letter'),
+    path('letters/list/', views.list_letters, name='list_letters'),
 
     path('information-level/', views.information_level, name='information_level'),
     path('information-level2/', views.information_level2, name='information_level2'),
 
-    path('meaning-level/create', views.create_meaning_level, name='create_meaning_level')
+    path('meaning-level/create', views.create_meaning_level, name='create_meaning_level'),
 
-    
+    path('edit-quiz/<int:quiz_id>/', views.edit_quiz, name='edit_quiz'),
+    path('edit-fill-blank/<int:fill_blank_id>/', views.edit_fill_blank, name='edit_fill_blank'),
+    path('edit-word-form/<int:word_form_id>/', views.edit_word_form, name='edit_word_form'),
+    path('edit-match-following/<int:match_id>/', views.edit_match_following, name='edit_match_following'),
+    path('edit-letter/<int:letter_id>/', views.edit_letter, name='edit_letter'),
+
+
+    path('create-rearrange/', views.create_rearrange, name='create_rearrange'),
 
 ]
