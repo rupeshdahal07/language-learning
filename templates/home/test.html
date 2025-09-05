@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Language Learning App</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 50%, #1d4ed8 100%);
+        }
+        .cherry-blossom {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cg fill='%23f8b4d0' opacity='0.7'%3E%3Ccircle cx='20' cy='20' r='3'/%3E%3Ccircle cx='25' cy='15' r='2'/%3E%3Ccircle cx='30' cy='25' r='2.5'/%3E%3Ccircle cx='15' cy='30' r='2'/%3E%3Ccircle cx='80' cy='15' r='3'/%3E%3Ccircle cx='85' cy='20' r='2'/%3E%3Ccircle cx='75' cy='25' r='2.5'/%3E%3Ccircle cx='90' cy='10' r='2'/%3E%3C/g%3E%3C/svg%3E");
+        }
+        .number-circle {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 24px;
+            border: 4px solid;
+            position: relative;
+        }
+        .active-lesson {
+            background: #fbbf24;
+            border-color: #f59e0b;
+            color: #92400e;
+        }
+        .inactive-lesson {
+            background: white;
+            border-color: #d1d5db;
+            color: #6b7280;
+        }
+        .card-shadow {
+            box-shadow: 0 8px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans">
+    <div class="max-w-sm mx-auto bg-white min-h-screen">
+        <!-- Header -->
+        <div class="bg-white px-4 py-3 flex items-center justify-between border-b border-gray-200">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-full overflow-hidden">
+                    <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Ccircle cx='20' cy='20' r='20' fill='%23f59e0b'/%3E%3Cpath d='M15 15c2-2 8-2 10 0s2 8 0 10-8 2-10 0-2-8 0-10z' fill='%23dc2626'/%3E%3C/svg%3E" alt="Profile" class="w-full h-full object-cover">
+                </div>
+                <div>
+                    <p class="text-cyan-500 text-sm font-medium">Hello,</p>
+                    <p class="text-gray-800 font-semibold">Himal Tim</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-3">
+                <div class="w-8 h-8 bg-yellow-400 rounded-lg flex items-center justify-center">
+                    <span class="text-orange-600 text-lg font-bold">👑</span>
+                </div>
+                <div class="w-8 h-8 bg-yellow-400 rounded-full flex items-center justify-center">
+                    <span class="text-yellow-600 text-lg">🪙</span>
+                </div>
+                <div class="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
+                    <span class="text-gray-600 text-lg">🔔</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="gradient-bg cherry-blossom px-4 py-6 relative overflow-hidden">
+            <!-- Lesson Progress -->
+            <div class="flex items-center justify-center space-x-8 mb-6 relative">
+                <button class="text-white text-2xl">‹</button>
+                
+                <div class="flex items-center space-x-12">
+                    <div class="number-circle inactive-lesson">1</div>
+                    <div class="number-circle active-lesson relative">
+                        2
+                        <div class="absolute -top-2 -right-2 w-4 h-4 bg-green-500 rounded-full border-2 border-white"></div>
+                    </div>
+                    <div class="number-circle inactive-lesson">3</div>
+                </div>
+
+                <button class="text-white text-2xl">›</button>
+            </div>
+
+            <!-- Continue Button -->
+            <button class="w-full bg-yellow-400 text-orange-600 font-semibold py-4 rounded-2xl flex items-center justify-center space-x-2 card-shadow hover:bg-yellow-300 transition-colors">
+                <span>Continue Your Learning</span>
+                <span class="text-lg">→</span>
+            </button>
+        </div>
+
+        <!-- Learn More Section -->
+        <div class="px-4 py-4 bg-blue-50">
+            <h3 class="text-cyan-500 font-semibold mb-4">Learn More,</h3>
+            
+            <!-- Quick Conversations Card -->
+            <div class="bg-cyan-500 rounded-2xl p-4 mb-4 card-shadow">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-4">
+                        <div class="w-12 h-12 bg-sky-400 rounded-xl flex items-center justify-center">
+                            <span class="text-2xl">💬</span>
+                        </div>
+                        <div>
+                            <h4 class="text-white font-bold text-lg">Quick</h4>
+                            <h4 class="text-white font-bold text-lg">Conversations</h4>
+                        </div>
+                    </div>
+                    <span class="text-white text-2xl">→</span>
+                </div>
+                <div class="mt-4 flex items-center">
+                    <div class="flex-1 bg-green-400 h-2 rounded-full"></div>
+                    <div class="flex-1 bg-white bg-opacity-30 h-2 rounded-full ml-1"></div>
+                </div>
+            </div>
+
+            <!-- Bottom Cards Row -->
+            <div class="grid grid-cols-2 gap-4">
+                <!-- Alphabets Card -->
+                <div class="bg-cyan-500 rounded-2xl p-4 card-shadow">
+                    <div class="flex items-center justify-between mb-3">
+                        <h4 class="text-white font-bold">Alphabets</h4>
+                        <span class="text-white text-lg">→</span>
+                    </div>
+                    <div class="w-10 h-10 bg-orange-400 rounded-lg flex items-center justify-center mb-2">
+                        <span class="text-white text-sm font-bold">漢</span>
+                    </div>
+                    <div class="w-6 h-6 bg-yellow-400 rounded-full flex items-center justify-center">
+                        <span class="text-orange-600 text-xs font-bold">6</span>
+                    </div>
+                </div>
+
+                <!-- Vocabs Card -->
+                <div class="bg-cyan-500 rounded-2xl p-4 card-shadow">
+                    <div class="flex items-center justify-between mb-3">
+                        <h4 class="text-white font-bold">Vocabs</h4>
+                        <span class="text-white text-lg">→</span>
+                    </div>
+                    <div class="w-10 h-10 bg-yellow-400 rounded-lg flex items-center justify-center mb-2">
+                        <span class="text-orange-600 text-sm font-bold">福</span>
+                    </div>
+                    <div class="w-6 h-6 bg-cyan-600 rounded-full flex items-center justify-center">
+                        <span class="text-white text-xs font-bold">2</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Resources Section -->
+        <div class="px-4 py-4 bg-blue-50">
+            <h3 class="text-cyan-500 font-semibold mb-4">Resources,</h3>
+            
+            <div class="grid grid-cols-2 gap-4">
+                <!-- Grammar Card -->
+                <div class="bg-cyan-500 rounded-2xl p-4 card-shadow">
+                    <div class="flex items-center justify-between mb-3">
+                        <h4 class="text-white font-bold">Grammar</h4>
+                        <span class="text-white text-lg">→</span>
+                    </div>
+                    <div class="w-10 h-10 bg-orange-400 rounded-lg flex items-center justify-center">
+                        <span class="text-white text-lg">文</span>
+                    </div>
+                </div>
+
+                <!-- Dictionary Card -->
+                <div class="bg-cyan-500 rounded-2xl p-4 card-shadow">
+                    <div class="flex items-center justify-between mb-3">
+                        <h4 class="text-white font-bold">Dictionary</h4>
+                        <span class="text-white text-lg">→</span>
+                    </div>
+                    <div class="w-10 h-10 bg-gray-300 rounded-lg flex items-center justify-center">
+                        <span class="text-gray-600 text-lg">📖</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom Navigation -->
+        <div class="bg-white border-t border-gray-200 px-4 py-2">
+            <div class="flex justify-around items-center">
+                <div class="flex flex-col items-center py-2">
+                    <div class="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center mb-1">
+                        <i class="fas fa-graduation-cap text-white text-sm"></i>
+                    </div>
+                    <span class="text-orange-500 text-xs font-medium">Learn</span>
+                </div>
+                
+                <div class="flex flex-col items-center py-2">
+                    <div class="w-8 h-8 flex items-center justify-center mb-1">
+                        <i class="fas fa-chart-bar text-gray-400 text-sm"></i>
+                    </div>
+                    <span class="text-gray-400 text-xs">Support</span>
+                </div>
+                
+                <div class="flex flex-col items-center py-2">
+                    <div class="w-8 h-8 flex items-center justify-center mb-1">
+                        <i class="fas fa-clipboard-list text-gray-400 text-sm"></i>
+                    </div>
+                    <span class="text-gray-400 text-xs">Test</span>
+                </div>
+                
+                <div class="flex flex-col items-center py-2">
+                    <div class="w-8 h-8 flex items-center justify-center mb-1">
+                        <i class="fas fa-user text-gray-400 text-sm"></i>
+                    </div>
+                    <span class="text-gray-400 text-xs">Profile</span>
+                </div>
+                
+                <div class="flex flex-col items-center py-2">
+                    <div class="w-8 h-8 flex items-center justify-center mb-1">
+                        <i class="fas fa-cog text-gray-400 text-sm"></i>
+                    </div>
+                    <span class="text-gray-400 text-xs">Connect</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

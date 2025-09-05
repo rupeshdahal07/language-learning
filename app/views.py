@@ -1307,15 +1307,15 @@ def create_rearrange(request):
         # Create rearrange data structure
         rearrange_data = [{
             
-                "answer": {
-                    "nepali": answer_nepali,
-                    "romaji": answer_romaji,
-                    "english": answer_english,
-                    "japanese": answer_japanese
+                "data": {
+                    "options": japanese_words ,
+                    "correctAnswer": answer_japanese ,
+                    
                 },
-                "question": {
-                    "romaji": romaji_words,
-                    "japanese": japanese_words
+                "rearrange_info": {
+                    "englishmeaning": answer_english ,
+                    "romanjimeaning": answer_romaji,
+                    "nepalimeaning": answer_nepali
                 },
                 "title": answer_english  # Using English as title
             
@@ -1341,7 +1341,70 @@ def create_rearrange(request):
     return render(request, 'rearrange.html', {'path_ids': path_ids, 'lesson_ids': lesson_ids})
 
 
+@login_required
+def create_conversation(request):
+    paths = supabase.table('paths').select("id, title").execute()
+    lessons = supabase.table('lessons').select("id, lesson_title").execute()
 
+    lesson_ids = [{'id': row['id'], 'title': row.get('lesson_title', str(row['id']))} for row in lessons.data]
+    path_ids = [{'id': row['id'], 'title': row.get('title', str(row['id']))} for row in paths.data]
+
+    if request.method == 'POST':
+        conversation_title = request.POST.get('conversation_title')
+        path_id = request.POST.get('path_id')
+        lesson_id = request.POST.get('lesson_id')
+
+        # Collect all turns
+        turns = []
+        idx = 0
+        while True:
+            role = request.POST.get(f'role_{idx}')
+            speaker = request.POST.get(f'speaker_{idx}')
+            english = request.POST.get(f'english_{idx}')
+            nepali = request.POST.get(f'nepali_{idx}')
+            romaji = request.POST.get(f'romaji_{idx}')
+            japanese = request.POST.get(f'japanese_{idx}')
+            if not any([role, speaker, english, nepali, romaji, japanese]):
+                break
+            turns.append({
+                "role": role,
+                "speaker": speaker,
+                "english": english,
+                "nepali": f'<font="Preeti font  SDF">{nepali}</font>',
+                "romaji": romaji,
+                "japanese": japanese,
+            })
+            idx += 1
+
+        if not conversation_title or not turns:
+            return render(request, 'converstion.html', {
+                'error': 'All fields are required.',
+                'path_ids': path_ids,
+                'lesson_ids': lesson_ids
+            })
+
+        # Save to Supabase
+        conversation_data = [{
+            "conversation_title": conversation_title,
+            "data": turns
+        }]
+        try:
+            print(conversation_data)
+            result = supabase.table("conversation_level").insert(conversation_data).execute()
+            ServiceLesson(result, 10, lesson_id)
+            return render(request, 'converstion.html', {
+                'success': 'Conversation rearrange exercise created successfully!',
+                'path_ids': path_ids,
+                'lesson_ids': lesson_ids
+            })
+        except Exception as e:
+            return render(request, 'converstion.html', {
+                'error': f'Error creating exercise: {str(e)}',
+                'path_ids': path_ids,
+                'lesson_ids': lesson_ids
+            })
+
+    return render(request, 'converstion.html', {'path_ids': path_ids, 'lesson_ids': lesson_ids})
 
 # Add these edit views to your existing views.py file
 

@@ -13,8 +13,9 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 from pathlib import Path
 import os
 from decouple import config
+from config.env import env, BASE_DIR
 
-
+env.read_env(os.path.join(BASE_DIR, '.env'))
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -41,7 +42,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'app',
-    'accounts'
+    'accounts',
+    'api'
 ]
 
 MIDDLEWARE = [
@@ -134,3 +136,16 @@ AUTH_USER_MODEL = "accounts.CustomUser"
 
 LOGIN_REDIRECT_URL = "/dashboard/"
 LOGIN_URL = "/accounts/login/"
+
+
+
+
+REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": (
+        "api.auth.SupabaseJWTAuthentication",
+    ),
+}
+SUPABASE_PROJECT = "<your-project-ref>"   # e.g. xyzcompanyabcd
+SUPABASE_URL = env('SUPABASE_URL')
+SUPABASE_ANON_KEY = env('SUPABASE_KEY')
+SUPABASE_JWT_SECRET = env('SUPABASE_JWT_SECRET')

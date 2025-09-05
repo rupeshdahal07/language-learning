@@ -1,12 +1,12 @@
 {% extends "base.html" %}
 {% block content %}
 <div class="container mx-auto px-4 py-8">
-        <div class="max-w-3xl mx-auto bg-white/90 backdrop-blur-sm rounded-3xl shadow-2xl p-8">
+        <div class="max-w-4xl mx-auto bg-white/90 backdrop-blur-sm rounded-3xl shadow-2xl p-8">
             <!-- Add this to the top of your form -->
             {% if is_edit %}
-                <h2 class="text-2xl font-bold mb-4">Edit Quiz Question</h2>
+                <h2 class="text-4xl font-bold text-center bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-8">Edit Quiz Question</h2>
             {% else %}
-                <h2 class="text-2xl font-bold mb-4">Create Quiz Question</h2>
+                <h2 class="text-4xl font-bold text-center bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-8">Create Quiz Question</h2>
             {% endif %}
 
 

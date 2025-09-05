@@ -98,9 +98,16 @@
                         <!-- Metadata -->
                         {% if question.created_at %}
                             <div class="mt-4 text-right text-sm text-gray-500">
-                                Created: {{ question.created_at|date:"M d, Y H:i" }}
+                                Created: {{ question.created_at }}
                             </div>
                         {% endif %}
+
+                        <div class="mt-4 text-right">
+                            <a href="{% url 'edit_fill_blank' question.id %}" 
+                            class="px-4 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors text-sm font-medium">
+                                Edit
+                            </a>
+                        </div>
                     </div>
                 {% endfor %}
             </div>

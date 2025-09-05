@@ -53,4 +53,6 @@ urlpatterns = [
 
     path('create-rearrange/', views.create_rearrange, name='create_rearrange'),
 
+    path('create-conversation/', views.create_conversation, name='conversation')
+
 ]

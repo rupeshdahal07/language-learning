@@ -239,6 +239,32 @@
                             </div>
                         {% endfor %}
                     {% endif %}
+                    {% if recent_items.quiz %}
+                        {% for quiz in recent_items.quiz %}
+                            <div class="flex items-center space-x-3 p-3 bg-green-50 rounded-lg">
+                                <div class="w-2 h-2 bg-green-500 rounded-full"></div>
+                                <div class="flex-1">
+                                    <p class="text-sm text-gray-800">Quiz created: <span class="font-semibold">{{ quiz.data.questionText|truncatechars:30 }}</span></p>
+                                    {% if quiz.created_at %}
+                                        <p class="text-xs text-gray-500">{{ quiz.created_at }} ago</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                    {% if recent_items.quiz %}
+                        {% for quiz in recent_items.quiz %}
+                            <div class="flex items-center space-x-3 p-3 bg-green-50 rounded-lg">
+                                <div class="w-2 h-2 bg-green-500 rounded-full"></div>
+                                <div class="flex-1">
+                                    <p class="text-sm text-gray-800">Quiz created: <span class="font-semibold">{{ quiz.data.questionText|truncatechars:30 }}</span></p>
+                                    {% if quiz.created_at %}
+                                        <p class="text-xs text-gray-500">{{ quiz.created_at }} ago</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
 
                     {% if not recent_items.users and not recent_items.fill_blanks and not recent_items.quiz and not recent_items.word_forms %}
                         <div class="text-center py-8 text-gray-500">
