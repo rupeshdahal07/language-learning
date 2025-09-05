@@ -173,7 +173,7 @@ class UserLessonProgressView(APIView):
                 
             else:
                 query = query.is_("path_id", None)
-                
+
             response = query.execute()
             return Response(response.data)
                 
@@ -281,7 +281,7 @@ class UserLevelProgressView(APIView):
             lesson_id = request.GET.get('lesson_id')
             level = request.GET.get('level')  # Should be a JSON string
 
-            if not all([user_id, lesson_id, level]):
+            if not all([user_id, level]):
                 return Response(
                     {"error": "user_id, lesson_id, and level are required"},
                     status=status.HTTP_400_BAD_REQUEST
@@ -298,10 +298,16 @@ class UserLevelProgressView(APIView):
 
             query = supabase.table("user_level_progress").select("*") \
                 .eq("user_id", user_id) \
-                .eq("lesson_id", lesson_id) \
-                .eq("level", level_dict)
+                .eq("level", json.dumps(level_dict, sort_keys=True))
+            
+            if lesson_id:
+                query = query.eq("lesson_id", lesson_id)
+            else:
+                query = query.is_("lesson_id", None)
             if path_id:
                 query = query.eq("path_id", path_id)
+            else:
+                query = query.is_("path_id", None)
             response = query.single().execute()
             return Response(response.data)
         except Exception as e:
@@ -325,7 +331,7 @@ class UserLevelProgressView(APIView):
             time_spent = request.data.get("time_spent")
             extra_data = request.data.get("extra_data", {})
 
-            if not all([user_id, lesson_id, level]):
+            if not all([user_id, level]):
                 return Response(
                     {"error": "user_id, lesson_id, and level are required"},
                     status=status.HTTP_400_BAD_REQUEST
@@ -337,8 +343,12 @@ class UserLevelProgressView(APIView):
             # Check if progress exists
             query = supabase.table("user_level_progress").select("*") \
                 .eq("user_id", user_id) \
-                .eq("lesson_id", lesson_id) \
                 .eq("level", level_json_str)
+            if lesson_id:
+                query = query.eq("lesson_id", lesson_id)
+            else:
+                query = query.is_("lesson_id", None)
+
             if path_id:
                 query = query.eq("path_id", path_id)
             else:
@@ -359,9 +369,15 @@ class UserLevelProgressView(APIView):
 
             if existing.data:
                 update_query = supabase.table("user_level_progress").update(progress_data) \
-                    .eq("user_id", user_id).eq("lesson_id", lesson_id).eq("level", level_json_str)
+                    .eq("user_id", user_id).eq("level", level_json_str)
+                if lesson_id:
+                    update_query = update_query.eq("lesson_id", lesson_id)
+                else:
+                    update_query = update_query.is_("lesson_id", None)
+
                 if path_id:
                     update_query = update_query.eq("path_id", path_id)
+
                 response = update_query.execute()
                 return Response(response.data, status=status.HTTP_200_OK)
             else:
