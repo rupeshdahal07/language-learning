@@ -60,68 +60,45 @@ class UserPathProgressView(APIView):
                     status=status.HTTP_400_BAD_REQUEST
                 )
             
-            # Calculate the user path progress
-            user_lesson_progress = supabase.table("user_lesson_progress").select("*").eq("user_id", user_id).eq("path_id", path_id).execute()
-            
-            # Initialize default values
-            completed_lessons = []
-            incomplete_lessons = []
-            progress_percentage = 0
-            
-            if user_lesson_progress.data:
-                lesson_data = user_lesson_progress.data[0] if user_lesson_progress.data else {}
-                completed_lessons = lesson_data.get('completed_levels', [])
-                incomplete_lessons = lesson_data.get('incorrect_levels', [])
+            # Get total lessons in this path from the path table
+            path_response = supabase.table("paths").select("lessons").eq("id", path_id).single().execute()
+            lessons_list = path_response.data.get("lessons", []) if path_response.data else []
+            total_lessons = len(lessons_list)
 
-                # Ensure both are lists
+            # Get current progress
+            user_path_progress = supabase.table("user_path_progress").select("*").eq("user_id", user_id).eq("path_id", path_id).execute()
+            
+            # Initialize completed_lessons
+            completed_lessons = []
+            if user_path_progress.data:
+                lesson_data = user_path_progress.data[0]
+                completed_lessons = lesson_data.get('completed_lessons', [])
                 if not isinstance(completed_lessons, list):
                     completed_lessons = [completed_lessons] if completed_lessons is not None else []
-                if not isinstance(incomplete_lessons, list):
-                    incomplete_lessons = [incomplete_lessons] if incomplete_lessons is not None else []
 
-                total_lessons = len(completed_lessons) + len(incomplete_lessons)
-                if total_lessons > 0:
-                    progress_percentage = (len(completed_lessons) / total_lessons) * 100
-                else:
-                    progress_percentage = 0
-            
-            # Determine status based on progress
-            if progress_percentage >= 100:
-                status_value = 1
-            elif progress_percentage > 0:
-                status_value = 0
-            else:
-                status_value = 0
-            
-            # Check if progress already exists
-            existing = supabase.table("user_path_progress").select("*").eq("user_id", user_id).eq("path_id", path_id).execute()
-            
-            if existing.data:
+            # Get new lessons to append from request data
+            new_completed_lessons = request.data.get("completed_lessons", completed_lessons)
+            if not isinstance(new_completed_lessons, list):
+                new_completed_lessons = [new_completed_lessons] if new_completed_lessons is not None else []
+
+            # Merge and deduplicate
+            for lesson in new_completed_lessons:
+                if lesson not in completed_lessons:
+                    completed_lessons.append(lesson)
+
+            # Calculate progress percentage
+            progress_percentage = (len(completed_lessons) / total_lessons) * 100 if total_lessons > 0 else 0
+
+            # Determine status
+            status_value = 1 if progress_percentage >= 100 else 0
+
+            if user_path_progress.data:
                 # Update existing progress
-                existing_data = existing.data[0]
-                existing_completed_lessons = existing_data.get("completed_lessons", [])
-                
-                # Ensure existing_completed_lessons is a list
-                if not isinstance(existing_completed_lessons, list):
-                    existing_completed_lessons = [existing_completed_lessons] if existing_completed_lessons is not None else []
-                
-                # Get new lessons to append from request data
-                new_completed_lessons = request.data.get("completed_lessons", completed_lessons)
-                if not isinstance(new_completed_lessons, list):
-                    new_completed_lessons = [new_completed_lessons] if new_completed_lessons is not None else []
-                
-                # Append new lessons to existing ones (avoid duplicates)
-                for lesson in new_completed_lessons:
-                    if lesson not in existing_completed_lessons:
-                        existing_completed_lessons.append(lesson)
-                
-                # Update data
                 update_data = {
                     "status": status_value,
                     "path_progress": progress_percentage,
-                    "completed_lessons": existing_completed_lessons
+                    "completed_lessons": completed_lessons
                 }
-                
                 response = supabase.table("user_path_progress").update(update_data).eq("user_id", user_id).eq("path_id", path_id).execute()
                 return Response(response.data, status=status.HTTP_200_OK)
             else:
@@ -131,9 +108,8 @@ class UserPathProgressView(APIView):
                     "path_id": path_id,
                     "status": status_value,
                     "path_progress": progress_percentage,
-                    "completed_lessons": request.data.get("completed_lessons", completed_lessons)
+                    "completed_lessons": completed_lessons
                 }
-                
                 response = supabase.table("user_path_progress").insert(progress_data).execute()
                 return Response(response.data, status=status.HTTP_201_CREATED)
             
@@ -184,7 +160,7 @@ class UserLessonProgressView(APIView):
             )
 
     def post(self, request):
-        """Create or update lesson progress for user"""
+        """Create or update lesson progress for user, progress is based on incorrect_levels"""
         try:
             jwt_token = request.auth
             supabase = get_user_supabase(jwt_token)
@@ -199,7 +175,7 @@ class UserLessonProgressView(APIView):
                     status=status.HTTP_400_BAD_REQUEST
                 )
 
-            # Get lesson info (fix query)
+            # Get lesson info
             lesson = supabase.table("lessons").select("*").eq("id", lesson_id).single().execute()
             total_levels = []
             if lesson.data:
@@ -213,23 +189,22 @@ class UserLessonProgressView(APIView):
                 query = query.is_("path_id", None)
             existing = query.execute()
 
-            # Prepare completed_levels
-            new_completed_levels = request.data.get("completed_levels", [])
-            if not isinstance(new_completed_levels, list):
-                new_completed_levels = [new_completed_levels] if new_completed_levels is not None else []
+            # Prepare incorrect_levels
+            new_incorrect_levels = request.data.get("incorrect_levels", [])
+            if not isinstance(new_incorrect_levels, list):
+                new_incorrect_levels = [new_incorrect_levels] if new_incorrect_levels is not None else []
 
-            # Calculate progress
-            completed_levels = new_completed_levels
+            incorrect_levels = new_incorrect_levels
             if existing.data:
                 existing_data = existing.data[0]
-                existing_completed_levels = existing_data.get("completed_levels", [])
-                if not isinstance(existing_completed_levels, list):
-                    existing_completed_levels = [existing_completed_levels] if existing_completed_levels is not None else []
+                existing_incorrect_levels = existing_data.get("incorrect_levels", [])
+                if not isinstance(existing_incorrect_levels, list):
+                    existing_incorrect_levels = [existing_incorrect_levels] if existing_incorrect_levels is not None else []
                 # Merge and deduplicate
-                completed_levels = new_completed_levels #list(set(existing_completed_levels + new_completed_levels))
+                incorrect_levels = list(set(existing_incorrect_levels + new_incorrect_levels))
 
             total_count = len(total_levels) if isinstance(total_levels, list) else 0
-            progress_percentage = (len(completed_levels) / total_count) * 100 if total_count > 0 else 0
+            progress_percentage = (len(incorrect_levels) / total_count) * 100 if total_count > 0 else 0
 
             status_value = 1 if progress_percentage >= 100 else 0
 
@@ -237,10 +212,11 @@ class UserLessonProgressView(APIView):
             progress_data = {
                 "user_id": user_id,
                 "lesson_id": lesson_id,
-                "completed_levels": completed_levels,
+                "incorrect_levels": incorrect_levels,
+                "completed_levels": request.data.get("completed_levels", []),
                 "status": status_value,
                 "lesson_progress": progress_percentage,
-                "incorrect_levels":request.data.get("incorrect_levels", [])
+
             }
             if path_id:
                 progress_data["path_id"] = path_id
@@ -263,7 +239,6 @@ class UserLessonProgressView(APIView):
                 {"error": f"Error creating/updating progress: {str(e)}"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
-
 
 
 
@@ -359,7 +334,7 @@ class UserLevelProgressView(APIView):
                 "user_id": user_id,
                 "lesson_id": lesson_id,
                 "level": level,  # dict for insert/update
-                "status": status_value,
+                "status": request.data.get("status", 0),
                 "extra_data": extra_data,
             }
             if path_id:
