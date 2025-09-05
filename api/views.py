@@ -170,12 +170,12 @@ class UserLessonProgressView(APIView):
             
             if path_id:
                 query = query.eq("path_id", path_id)
-                response = query.single().execute()
-                print(f'user_lesson_progress: {response.data}')
-                return Response(response.data)
+                
             else:
-                response = query.execute()
-                return Response(response.data)
+                query = query.is_("path_id", None)
+                
+            response = query.execute()
+            return Response(response.data)
                 
         except Exception as e:
             return Response(
