@@ -240,6 +240,7 @@ class UserLessonProgressView(APIView):
                 "completed_levels": completed_levels,
                 "status": status_value,
                 "lesson_progress": progress_percentage,
+                "incorrect_levels":request.data.get("incorrect_levels", [])
             }
             if path_id:
                 progress_data["path_id"] = path_id
