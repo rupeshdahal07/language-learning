@@ -189,34 +189,33 @@ class UserLessonProgressView(APIView):
                 query = query.is_("path_id", None)
             existing = query.execute()
 
-            # Prepare incorrect_levels
-            new_incorrect_levels = request.data.get("incorrect_levels", [])
-            if not isinstance(new_incorrect_levels, list):
-                new_incorrect_levels = [new_incorrect_levels] if new_incorrect_levels is not None else []
+            # Prepare completed level progress
+            new_completed_levels = request.data.get("completed_levels", [])
+            if not isinstance(new_completed_levels, list):
+                new_completed_levels = [new_completed_levels] if new_completed_levels is not None else []
 
-            incorrect_levels = new_incorrect_levels
+            completed_levels = new_completed_levels
             if existing.data:
                 existing_data = existing.data[0]
-                existing_incorrect_levels = existing_data.get("incorrect_levels", [])
-                if not isinstance(existing_incorrect_levels, list):
-                    existing_incorrect_levels = [existing_incorrect_levels] if existing_incorrect_levels is not None else []
+                existing_completed_levels = existing_data.get("completed_levels", [])
+                if not isinstance(existing_completed_levels, list):
+                    existing_completed_levels = [existing_completed_levels] if existing_completed_levels is not None else []
                 # Merge and deduplicate
-                incorrect_levels = list(set(existing_incorrect_levels + new_incorrect_levels))
-
+                completed_levels = list({json.dumps(l, sort_keys=True): l for l in (existing_completed_levels + new_completed_levels)}.values())
+                            
             total_count = len(total_levels) if isinstance(total_levels, list) else 0
-            progress_percentage = (len(incorrect_levels) / total_count) * 100 if total_count > 0 else 0
-
-            status_value = 1 if progress_percentage >= 100 else 0
+            progress_percentage = (len(completed_levels) / total_count) * 100 if total_count > 0 else 0
+            
+            status_value = 1 #if progress_percentage >= 10 else 0
 
             # Prepare update/insert data
             progress_data = {
                 "user_id": user_id,
                 "lesson_id": lesson_id,
-                "incorrect_levels": incorrect_levels,
-                "completed_levels": request.data.get("completed_levels", []),
+                "completed_levels": completed_levels,
+                "incorrect_levels": request.data.get("incorrect_levels", []),
                 "status": status_value,
                 "lesson_progress": progress_percentage,
-
             }
             if path_id:
                 progress_data["path_id"] = path_id
@@ -274,7 +273,7 @@ class UserLevelProgressView(APIView):
             query = supabase.table("user_level_progress").select("*") \
                 .eq("user_id", user_id) \
                 .eq("level", json.dumps(level_dict, sort_keys=True))
-            
+
             if lesson_id:
                 query = query.eq("lesson_id", lesson_id)
             else:
@@ -283,8 +282,12 @@ class UserLevelProgressView(APIView):
                 query = query.eq("path_id", path_id)
             else:
                 query = query.is_("path_id", None)
-            response = query.single().execute()
-            return Response(response.data)
+
+            response = query.execute()
+            if not response.data:
+                return Response(None, status=status.HTTP_200_OK)
+            return Response(response.data[0])
+        
         except Exception as e:
             return Response(
                 {"error": f"Error fetching level progress: {str(e)}"},
