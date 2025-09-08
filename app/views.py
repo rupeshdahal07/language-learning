@@ -1094,9 +1094,9 @@ def information_level(request):
         usecase_count = 0
         while True:
             use_case = request.POST.get(f'option_{usecase_count}')
-            use_case = re.sub(r"<(.*?)>", r'<font="Preeti font  SDF">\1</font>', use_case)
             if use_case is None:
                 break
+            use_case = re.sub(r"<(.*?)>", r'<font="Preeti font  SDF">\1</font>', use_case)
             use_cases.append(use_case)
             usecase_count += 1
         
