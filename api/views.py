@@ -376,26 +376,29 @@ class UserRegistration(APIView):
     def post(self, request):
         try:
             data = request.data
-            fname = data.get('fname', '').strip()
-            lname = data.get('lname', '').strip()
+            name = data.get('name', '').strip()
             email = data.get('email', '').strip()
             password = data.get('password', '')
             phone = data.get('phone', '').strip()
             avatar_file = request.FILES.get('avatar_url')
 
-            if not all([fname, lname, email, password]):
+            if not all([name, email, password]):
                 return Response(
-                    {"error": "First name, last name, email, and password are required."},
+                    {"error": "Name, email, and password are required."},
                     status=status.HTTP_400_BAD_REQUEST
                 )
 
-            username = f"{fname}{lname[0]}{random.randrange(100, 100000)}"
+            # Create username from name (taking first part + random number)
+            name_parts = name.split()
+            first_part = name_parts[0] if name_parts else name
+            username = f"{first_part}{random.randrange(100, 100000)}"
 
             # Create user in Supabase Auth
             resp = supabase.auth.admin.create_user({
                 "email": email,
                 "password": password,
-                "phone": phone or None
+                "phone": phone or None,
+                # "email_confirm": True
             })
             user_id = resp.user.id
 
@@ -415,7 +418,7 @@ class UserRegistration(APIView):
             # Insert user profile in users table
             user_data = {
                 "id": user_id,
-                "display_name": f"{fname} {lname}",
+                "display_name": name,
                 "username": username,
                 "avatar_url": image_url
             }
@@ -430,6 +433,80 @@ class UserRegistration(APIView):
             )
 
 
+class LearnDataView(APIView):
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        """Get comprehensive learning progress data for a user"""
+        try:
+            jwt_token = request.auth
+            supabase = get_user_supabase(jwt_token)
+            
+            user_id = request.GET.get('user_id')
+            
+            if not user_id:
+                return Response(
+                    {"error": "user_id is required"},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Get user basic info - use execute() instead of single() to handle missing users
+            user_response = supabase.table("users").select("display_name").eq("id", user_id).execute()
+            user_name = "User"  # Default name
+            if user_response.data and len(user_response.data) > 0:
+                user_name = user_response.data[0].get("display_name", "User")
+            
+            # Get user path progress
+            path_progress_response = supabase.table("user_path_progress").select("*").eq("user_id", user_id).execute()
+            path_progress = path_progress_response.data or []
+            
+            # Calculate streak (may need to implement this based on your streak logic)
+            streak = 2  
+            
+            # Calculate alphabet progress
+            # alphabet_total = supabase.table("letters").select("id", count="exact").limit(0).execute()
+            # alphabet_completed = supabase.table("user_level_progress").select("id", count="exact").is_("path_id", None).is_("lesson_id", None).limit(0).eq("user_id", user_id).execute()
+            
+            # alphabet_progress = 0.0
+            # if alphabet_total.count and alphabet_total.count > 0:
+            #     completed_count = alphabet_completed.count or 0
+            #     alphabet_progress = min(completed_count / alphabet_total.count, 1.0)
+            
+            # # Calculate vocab progress
+            # vocab_total = supabase.table("lessons").select("id", count="exact").eq("lesson_type", 4).limit(0).execute()
+            # vocab_completed_response = supabase.table("user_lesson_progress") \
+            #     .select("*, lessons!inner(lesson_type)") \
+            #     .eq("user_id", user_id) \
+            #     .eq("lessons.lesson_type", 4) \
+            #     .execute()
+            
+            # vocab_progress = 0.0
+            # if vocab_total.count and vocab_total.count > 0:
+            #     vocab_lesson_count = 0
+            #     for lesson_progress in vocab_completed_response.data or []:
+            #         if lesson_progress.get("lesson_progress", 0) > 0:
+            #             vocab_lesson_count += 1
+            #     vocab_progress = min(vocab_lesson_count / vocab_total.count, 1.0)
+            
+            # # Calculate tracing progress (based on letters with specific criteria)
+            # tracing_progress = alphabet_progress  # Using same logic for now
+            
+            response_data = {
+                "name": user_name,
+                "streak": streak,
+                "path_progress": path_progress,
+                # "alphabet_progress": round(alphabet_progress, 2),
+                # "vocab_progress": round(vocab_progress, 2),
+                # "tracing_progress": round(tracing_progress, 2)
+            }
+            
+            return Response(response_data, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            return Response(
+                {"error": f"Error fetching learning data: {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
     # def put(self, request):
     #     """Update user's path progress"""
