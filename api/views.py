@@ -4,6 +4,7 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework import status
 from .utils import get_user_supabase
 import json
+from .supabase_client import supabase
 
 class UserPathProgressView(APIView):
     permission_classes = [IsAuthenticated]
@@ -369,8 +370,64 @@ class UserLevelProgressView(APIView):
             )
 
 
+import random
 
+class UserRegistration(APIView):
+    def post(self, request):
+        try:
+            data = request.data
+            fname = data.get('fname', '').strip()
+            lname = data.get('lname', '').strip()
+            email = data.get('email', '').strip()
+            password = data.get('password', '')
+            phone = data.get('phone', '').strip()
+            avatar_file = request.FILES.get('avatar_url')
 
+            if not all([fname, lname, email, password]):
+                return Response(
+                    {"error": "First name, last name, email, and password are required."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            username = f"{fname}{lname[0]}{random.randrange(100, 100000)}"
+
+            # Create user in Supabase Auth
+            resp = supabase.auth.admin.create_user({
+                "email": email,
+                "password": password,
+                "phone": phone or None
+            })
+            user_id = resp.user.id
+
+            image_url = None
+            if avatar_file:
+                file_name = f"users/{avatar_file.name}"
+                try:
+                    supabase.storage.from_("users").upload(file_name, avatar_file.read())
+                    # Use the correct public path for your Supabase bucket
+                    image_url = f"/storage/v1/object/public/users/{file_name}"
+                except Exception as e:
+                    return Response(
+                        {"error": f"Avatar upload failed: {str(e)}"},
+                        status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                    )
+
+            # Insert user profile in users table
+            user_data = {
+                "id": user_id,
+                "display_name": f"{fname} {lname}",
+                "username": username,
+                "avatar_url": image_url
+            }
+            response = supabase.table("users").insert(user_data).execute()
+
+            return Response(response.data, status=status.HTTP_201_CREATED)
+
+        except Exception as e:
+            return Response(
+                {"error": f"Error creating user: {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 
 

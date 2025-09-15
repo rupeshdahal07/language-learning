@@ -1,0 +1,496 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="max-w-6xl mx-auto">
+        <!-- Header Section -->
+        <div class="bg-white/90 backdrop-blur-sm rounded-3xl shadow-2xl p-8 mb-8">
+            {% if lesson %}
+                <div class="flex items-center justify-between mb-4">
+                    <h1 class="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                        {{ lesson.lesson_title|default:"Lesson Details" }}
+                    </h1>
+                    <div class="flex items-center space-x-4">
+                        <span class="bg-blue-100 text-blue-800 text-sm font-medium px-3 py-1 rounded-full">
+                            {{ total_questions }} Question{{ total_questions|pluralize }}
+                        </span>
+                        {% comment %} <a href="{% url 'list_lessons' %}" class="inline-flex items-center px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors">
+                            <i class="fas fa-arrow-left mr-2"></i>Back to Lessons
+                        </a> {% endcomment %}
+                    </div>
+                </div>
+                
+                {% if lesson.lesson_description %}
+                    <p class="text-gray-600 text-lg mb-4">{{ lesson.lesson_description }}</p>
+                {% endif %}
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                    <div class="bg-blue-50 p-3 rounded-lg">
+                        <span class="font-semibold text-blue-700">Lesson Type:</span>
+                        <span class="text-blue-600">{{ lesson.lesson_type|default:"N/A" }}</span>
+                    </div>
+                    <div class="bg-green-50 p-3 rounded-lg">
+                        <span class="font-semibold text-green-700">Total Questions:</span>
+                        <span class="text-green-600">{{ total_questions }}</span>
+                    </div>
+                    <div class="bg-purple-50 p-3 rounded-lg">
+                        <span class="font-semibold text-purple-700">Path ID:</span>
+                        <span class="text-purple-600">{{ lesson.path_id|default:"N/A" }}</span>
+                    </div>
+                </div>
+            {% else %}
+                <h1 class="text-4xl font-bold text-center text-red-600">Lesson Not Found</h1>
+            {% endif %}
+        </div>
+
+        <!-- Error Message -->
+        {% if error %}
+            <div class="bg-red-100 border-l-4 border-red-500 text-red-700 px-6 py-4 rounded-xl mb-6 shadow-lg flex items-center">
+                <i class="fas fa-exclamation-triangle mr-3 text-red-500"></i>
+                <span class="font-medium">{{ error }}</span>
+            </div>
+        {% endif %}
+
+        <!-- Questions Section -->
+        {% if lesson_questions %}
+            <div class="space-y-6">
+                {% for question in lesson_questions %}
+                    <div class="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl p-6 border border-gray-200 hover:shadow-2xl transition-shadow duration-300">
+                        <!-- Question Header -->
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="flex items-center space-x-3">
+                                <span class="bg-gradient-to-r from-blue-500 to-purple-600 text-white text-xs font-bold px-3 py-1 rounded-full">
+                                    {{ question.level_type_name }}
+                                </span>
+                                <span class="text-gray-500 text-sm">ID: {{ question.id }}</span>
+                            </div>
+                            
+                            <!-- Edit Button -->
+                            <div class="flex items-center space-x-2">
+                                {% if question.level_type == 1 %}
+                                    <a href="{% url 'edit_quiz' question.id %}" class="inline-flex items-center px-3 py-1 bg-yellow-500 text-white text-xs rounded-lg hover:bg-yellow-600 transition-colors">
+                                        <i class="fas fa-edit mr-1"></i>Edit
+                                    </a>
+                                {% elif question.level_type == 5 %}
+                                    <a href="{% url 'edit_fill_blank' question.id %}" class="inline-flex items-center px-3 py-1 bg-yellow-500 text-white text-xs rounded-lg hover:bg-yellow-600 transition-colors">
+                                        <i class="fas fa-edit mr-1"></i>Edit
+                                    </a>
+                                {% elif question.level_type == 4 %}
+                                    <a href="{% url 'edit_word_form' question.id %}" class="inline-flex items-center px-3 py-1 bg-yellow-500 text-white text-xs rounded-lg hover:bg-yellow-600 transition-colors">
+                                        <i class="fas fa-edit mr-1"></i>Edit
+                                    </a>
+                                {% elif question.level_type == 3 %}
+                                    <a href="{% url 'edit_match_following' question.id %}" class="inline-flex items-center px-3 py-1 bg-yellow-500 text-white text-xs rounded-lg hover:bg-yellow-600 transition-colors">
+                                        <i class="fas fa-edit mr-1"></i>Edit
+                                    </a>
+                                {% elif question.level_type == 0 %}
+                                    <a href="{% url 'edit_letter' question.id %}" class="inline-flex items-center px-3 py-1 bg-yellow-500 text-white text-xs rounded-lg hover:bg-yellow-600 transition-colors">
+                                        <i class="fas fa-edit mr-1"></i>Edit
+                                    </a>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Question Content -->
+                        <div class="space-y-4">
+                            <!-- Quiz Questions (Type 1 & 8) -->
+                            {% if question.level_type == 1 or question.level_type == 8 %}
+                                <div>
+                                    <h3 class="text-lg font-semibold text-gray-800 mb-2">{{ question.title|default:"Quiz Question" }}</h3>
+                                    {% if question.data.questionText %}
+                                        <div class="bg-blue-50 p-4 rounded-lg mb-3">
+                                            <p class="text-gray-700">{{ question.data.questionText|safe }}</p>
+                                        </div>
+                                    {% endif %}
+                                    {% if question.data.options %}
+                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+                                            {% for option in question.data.options %}
+                                                <div class="p-3 bg-gray-50 rounded-lg {% if forloop.counter0 == question.data.correctOption %}border-2 border-green-500 bg-green-50{% endif %}">
+                                                    <span class="font-medium">{{ forloop.counter }}.</span> {{ option|safe }}
+                                                    {% if forloop.counter0 == question.data.correctOption %}
+                                                        <i class="fas fa-check-circle text-green-500 ml-2"></i>
+                                                    {% endif %}
+                                                </div>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+
+                            <!-- Fill in the Blanks (Type 5) -->
+                            {% elif question.level_type == 5 %}
+                                <div>
+                                    <h3 class="text-lg font-semibold text-gray-800 mb-2">{{ question.title|default:"Fill in the Blanks" }}</h3>
+                                    {% if question.data.questionText %}
+                                        <div class="bg-yellow-50 p-4 rounded-lg mb-3">
+                                            <p class="text-gray-700">{{ question.data.questionText|safe }}</p>
+                                        </div>
+                                    {% endif %}
+                                    {% if question.letter_info %}
+                                        <div class="bg-blue-50 p-4 rounded-lg mb-3">
+                                            <h4 class="font-semibold text-blue-800">{{ question.letter_info.title }}</h4>
+                                            {% if question.letter_info.meaning %}
+                                                <p class="text-gray-700 mt-2">{{ question.letter_info.meaning|safe }}</p>
+                                            {% endif %}
+                                            {% if question.letter_info.topics %}
+                                                <div class="mt-2">
+                                                    {% for topic in question.letter_info.topics %}
+                                                        <span class="inline-block bg-blue-200 text-blue-800 text-xs px-2 py-1 rounded mr-2">{{ topic }}</span>
+                                                    {% endfor %}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    {% endif %}
+                                    {% if question.imageUrl %}
+                                        <div class="mb-3">
+                                            <img src="{{ question.imageUrl }}" alt="Question Image" class="max-w-xs rounded-lg shadow-md">
+                                        </div>
+                                    {% endif %}
+                                    {% if question.data.options %}
+                                        <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
+                                            {% for option in question.data.options %}
+                                                <div class="p-2 bg-gray-50 rounded-lg text-center {% if forloop.counter0 == question.data.correctOption %}border-2 border-green-500 bg-green-50{% endif %}">
+                                                    {{ option|safe }}
+                                                    {% if forloop.counter0 == question.data.correctOption %}
+                                                        <i class="fas fa-check-circle text-green-500 ml-1"></i>
+                                                    {% endif %}
+                                                </div>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+
+                            <!-- Word Form Exercises (Type 4) -->
+                            {% elif question.level_type == 4 %}
+                                <div>
+                                    <h3 class="text-lg font-semibold text-gray-800 mb-2">Word Form Exercise</h3>
+                                    {% if question.sound %}
+                                        <div class="bg-purple-50 p-4 rounded-lg mb-3">
+                                            <p class="text-gray-700">{{ question.sound|safe }}</p>
+                                        </div>
+                                    {% endif %}
+                                    {% if question.audioUrl %}
+                                        <div class="mb-3">
+                                            <audio controls class="w-full">
+                                                <source src="{{ question.audioUrl }}" type="audio/mpeg">
+                                                Your browser does not support the audio element.
+                                            </audio>
+                                        </div>
+                                    {% endif %}
+                                    {% if question.answer %}
+                                        <div class="bg-green-50 p-3 rounded-lg mb-3">
+                                            <span class="font-semibold text-green-800">Answer:</span>
+                                            {% for ans in question.answer %}
+                                                <span class="bg-green-200 text-green-800 px-2 py-1 rounded ml-2">{{ ans }}</span>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                    {% if question.options %}
+                                        <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
+                                            {% for option in question.options %}
+                                                <div class="p-2 bg-gray-50 rounded-lg text-center">{{ option }}</div>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+
+                            <!-- Match the Following (Type 3) -->
+                            {% elif question.level_type == 3 %}
+                                <div>
+                                    <h3 class="text-lg font-semibold text-gray-800 mb-2">{{ question.title|default:"Match the Following" }}</h3>
+                                    {% if question.data %}
+                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div class="bg-blue-50 p-4 rounded-lg">
+                                                <h4 class="font-semibold text-blue-800 mb-2">Left Column</h4>
+                                                {% for pair in question.data %}
+                                                    <div class="p-2 mb-2 bg-white rounded border">{{ pair.nepali|safe }}</div>
+                                                {% endfor %}
+                                            </div>
+                                            <div class="bg-green-50 p-4 rounded-lg">
+                                                <h4 class="font-semibold text-green-800 mb-2">Right Column</h4>
+                                                {% for pair in question.data %}
+                                                    <div class="p-2 mb-2 bg-white rounded border">{{ pair.japanese }}</div>
+                                                {% endfor %}
+                                            </div>
+                                        </div>
+                                    {% endif %}
+                                </div>
+
+                            <!-- Letters/Alphabet (Type 0) -->
+                            {% elif question.level_type == 0 %}
+                                <div>
+                                    <h3 class="text-lg font-semibold text-gray-800 mb-2">{{ question.letter_name|default:"Letter" }}</h3>
+                                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                        {% if question.letter_name %}
+                                            <div class="bg-red-50 p-4 rounded-lg text-center">
+                                                <h4 class="font-semibold text-red-800">English</h4>
+                                                <p class="text-2xl">{{ question.letter_name }}</p>
+                                            </div>
+                                        {% endif %}
+                                        {% if question.nepali_text %}
+                                            <div class="bg-blue-50 p-4 rounded-lg text-center">
+                                                <h4 class="font-semibold text-blue-800">Nepali</h4>
+                                                <p class="text-2xl">{{ question.nepali_text|safe }}</p>
+                                            </div>
+                                        {% endif %}
+                                        {% if question.japanese_text %}
+                                            <div class="bg-green-50 p-4 rounded-lg text-center">
+                                                <h4 class="font-semibold text-green-800">Japanese</h4>
+                                                <p class="text-2xl">{{ question.japanese_text }}</p>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                    {% if question.letter_info %}
+                                        <div class="mt-4 bg-gray-50 p-4 rounded-lg">
+                                            {% if question.letter_info.onyomi %}
+                                                <p><span class="font-semibold">Onyomi:</span> {{ question.letter_info.onyomi }}</p>
+                                            {% endif %}
+                                            {% if question.letter_info.kunyomi %}
+                                                <p><span class="font-semibold">Kunyomi:</span> {{ question.letter_info.kunyomi }}</p>
+                                            {% endif %}
+                                        </div>
+                                    {% endif %}
+                                    {% if question.audio %}
+                                        <div class="mt-3">
+                                            <audio controls class="w-full">
+                                                <source src="{{ question.audio }}" type="audio/mpeg">
+                                                Your browser does not support the audio element.
+                                            </audio>
+                                        </div>
+                                    {% endif %}
+                                </div>
+
+                            <!-- Word Games (Type 2) -->
+                            {% elif question.level_type == 2 %}
+                                <div>
+                                    <h3 class="text-lg font-semibold text-gray-800 mb-2">{{ question.title|default:"Word Game" }}</h3>
+                                    {% if question.options %}
+                                        <div class="bg-blue-50 p-4 rounded-lg mb-3">
+                                            <h4 class="font-semibold text-blue-800 mb-2">Available Letters</h4>
+                                            <div class="flex flex-wrap gap-2">
+                                                {% for option in question.options %}
+                                                    <span class="bg-blue-200 text-blue-800 px-3 py-1 rounded">{{ option }}</span>
+                                                {% endfor %}
+                                            </div>
+                                        </div>
+                                    {% endif %}
+                                    {% if question.valid_words %}
+                                        <div class="bg-green-50 p-4 rounded-lg">
+                                            <h4 class="font-semibold text-green-800 mb-2">Valid Words</h4>
+                                            <div class="flex flex-wrap gap-2">
+                                                {% for word in question.valid_words %}
+                                                    <span class="bg-green-200 text-green-800 px-3 py-1 rounded">{{ word }}</span>
+                                                {% endfor %}
+                                            </div>
+                                        </div>
+                                    {% endif %}
+                                </div>
+
+                            <!-- Information Levels (Type 6) -->
+                            {% elif question.level_type == 6 %}
+                                <div>
+                                    <h3 class="text-lg font-semibold text-gray-800 mb-2">Information Level</h3>
+                                    {% if question.letter_info %}
+                                        <div class="bg-blue-50 p-4 rounded-lg mb-3">
+                                            {% if question.letter_info.title %}
+                                                <h4 class="font-semibold text-blue-800">{{ question.letter_info.title }}</h4>
+                                            {% endif %}
+                                            {% if question.letter_info.meaning %}
+                                                <p class="text-gray-700 mt-2">{{ question.letter_info.meaning|safe }}</p>
+                                            {% endif %}
+                                            {% if question.letter_info.romaji %}
+                                                <p class="text-gray-600 mt-2"><span class="font-semibold">Romaji:</span> {{ question.letter_info.romaji }}</p>
+                                            {% endif %}
+                                            {% if question.letter_info.nepali_meaning %}
+                                                <p class="text-gray-700 mt-2">{{ question.letter_info.nepali_meaning|safe }}</p>
+                                            {% endif %}
+                                        </div>
+                                    {% endif %}
+                                    {% if question.use_cases %}
+                                        <div class="bg-gray-50 p-4 rounded-lg mb-3">
+                                            <h4 class="font-semibold text-gray-800 mb-2">Use Cases</h4>
+                                            {% for use_case in question.use_cases %}
+                                                <p class="text-gray-700 mb-1">• {{ use_case|safe }}</p>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                    {% if question.image_url %}
+                                        <div class="mb-3">
+                                            <img src="{{ question.image_url }}" alt="Information Image" class="max-w-xs rounded-lg shadow-md">
+                                        </div>
+                                    {% endif %}
+                                </div>
+
+                            <!-- Meaning Exercises (Type 7) -->
+                            {% elif question.level_type == 7 %}
+                                <div>
+                                    <h3 class="text-lg font-semibold text-gray-800 mb-2">{{ question.word|default:"Meaning Exercise" }}</h3>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div class="space-y-3">
+                                            {% if question.type %}
+                                                <div class="bg-purple-50 p-3 rounded-lg">
+                                                    <span class="font-semibold text-purple-800">Type:</span> {{ question.type }}
+                                                </div>
+                                            {% endif %}
+                                            {% if question.meaning %}
+                                                <div class="bg-blue-50 p-3 rounded-lg">
+                                                    <span class="font-semibold text-blue-800">Meaning:</span> {{ question.meaning }}
+                                                </div>
+                                            {% endif %}
+                                            {% if question.structure %}
+                                                <div class="bg-green-50 p-3 rounded-lg">
+                                                    <span class="font-semibold text-green-800">Structure:</span> {{ question.structure }}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                        <div class="space-y-3">
+                                            {% if question.usage %}
+                                                <div class="bg-yellow-50 p-3 rounded-lg">
+                                                    <span class="font-semibold text-yellow-800">Usage:</span> {{ question.usage }}
+                                                </div>
+                                            {% endif %}
+                                            {% if question.tips %}
+                                                <div class="bg-red-50 p-3 rounded-lg">
+                                                    <span class="font-semibold text-red-800">Tips:</span> {{ question.tips }}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    {% if question.examples %}
+                                        <div class="mt-4 bg-gray-50 p-4 rounded-lg">
+                                            <h4 class="font-semibold text-gray-800 mb-2">Examples</h4>
+                                            {% for example in question.examples %}
+                                                <p class="text-gray-700 mb-1">• {{ example }}</p>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+
+                            <!-- Rearrange Words (Type 9) -->
+                            {% elif question.level_type == 9 %}
+                                <div>
+                                    <h3 class="text-lg font-semibold text-gray-800 mb-2">{{ question.title|default:"Rearrange Words" }}</h3>
+                                    {% if question.rearrange_info %}
+                                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                                            {% if question.rearrange_info.englishmeaning %}
+                                                <div class="bg-red-50 p-3 rounded-lg">
+                                                    <span class="font-semibold text-red-800">English:</span>
+                                                    <p>{{ question.rearrange_info.englishmeaning }}</p>
+                                                </div>
+                                            {% endif %}
+                                            {% if question.rearrange_info.romanjimeaning %}
+                                                <div class="bg-blue-50 p-3 rounded-lg">
+                                                    <span class="font-semibold text-blue-800">Romaji:</span>
+                                                    <p>{{ question.rearrange_info.romanjimeaning }}</p>
+                                                </div>
+                                            {% endif %}
+                                            {% if question.rearrange_info.nepalimeaning %}
+                                                <div class="bg-green-50 p-3 rounded-lg">
+                                                    <span class="font-semibold text-green-800">Nepali:</span>
+                                                    <p>{{ question.rearrange_info.nepalimeaning|safe }}</p>
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    {% endif %}
+                                    {% if question.data %}
+                                        <div class="bg-yellow-50 p-4 rounded-lg mb-3">
+                                            <h4 class="font-semibold text-yellow-800 mb-2">Words to Rearrange</h4>
+                                            <div class="flex flex-wrap gap-2">
+                                                {% for option in question.data.options %}
+                                                    <span class="bg-yellow-200 text-yellow-800 px-3 py-1 rounded">{{ option }}</span>
+                                                {% endfor %}
+                                            </div>
+                                        </div>
+                                        <div class="bg-green-50 p-4 rounded-lg">
+                                            <h4 class="font-semibold text-green-800 mb-2">Correct Answer</h4>
+                                            <p class="text-green-700 text-lg">{{ question.data.correctAnswer }}</p>
+                                        </div>
+                                    {% endif %}
+                                </div>
+
+                            <!-- Conversations (Type 10) -->
+                            {% elif question.level_type == 10 %}
+                                <div>
+                                    <h3 class="text-lg font-semibold text-gray-800 mb-2">{{ question.conversation_title|default:"Conversation" }}</h3>
+                                    {% if question.data %}
+                                        <div class="space-y-3">
+                                            {% for turn in question.data %}
+                                                <div class="bg-gray-50 p-4 rounded-lg border-l-4 {% if turn.role == 'user' %}border-blue-500{% else %}border-green-500{% endif %}">
+                                                    <div class="flex items-center mb-2">
+                                                        <span class="font-semibold {% if turn.role == 'user' %}text-blue-800{% else %}text-green-800{% endif %}">
+                                                            {{ turn.speaker|default:turn.role|title }}
+                                                        </span>
+                                                    </div>
+                                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                                                        {% if turn.english %}
+                                                            <div>
+                                                                <span class="font-medium text-gray-600">English:</span>
+                                                                <p>{{ turn.english }}</p>
+                                                            </div>
+                                                        {% endif %}
+                                                        {% if turn.japanese %}
+                                                            <div>
+                                                                <span class="font-medium text-gray-600">Japanese:</span>
+                                                                <p>{{ turn.japanese }}</p>
+                                                            </div>
+                                                        {% endif %}
+                                                        {% if turn.romaji %}
+                                                            <div>
+                                                                <span class="font-medium text-gray-600">Romaji:</span>
+                                                                <p>{{ turn.romaji }}</p>
+                                                            </div>
+                                                        {% endif %}
+                                                        {% if turn.nepali %}
+                                                            <div>
+                                                                <span class="font-medium text-gray-600">Nepali:</span>
+                                                                <p>{{ turn.nepali|safe }}</p>
+                                                            </div>
+                                                        {% endif %}
+                                                    </div>
+                                                </div>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+
+                            <!-- Default/Unknown Type -->
+                            {% else %}
+                                <div>
+                                    <h3 class="text-lg font-semibold text-gray-800 mb-2">Unknown Question Type</h3>
+                                    <div class="bg-gray-50 p-4 rounded-lg">
+                                        <p class="text-gray-600">This question type ({{ question.level_type }}) is not yet supported in the display template.</p>
+                                        <details class="mt-2">
+                                            <summary class="cursor-pointer text-blue-600 hover:text-blue-800">Show Raw Data</summary>
+                                            <pre class="mt-2 p-3 bg-gray-100 rounded text-xs overflow-auto">{{ question|pprint }}</pre>
+                                        </details>
+                                    </div>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="text-center py-16">
+                <div class="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl p-12">
+                    <div class="text-gray-400 mb-6">
+                        <i class="fas fa-question-circle text-6xl"></i>
+                    </div>
+                    <h3 class="text-2xl font-semibold text-gray-700 mb-4">No Questions Found</h3>
+                    <p class="text-gray-500 mb-6 max-w-md mx-auto">
+                        This lesson doesn't have any questions yet. Add some questions to get started.
+                    </p>
+                    <div class="flex justify-center space-x-4">
+                        <a href="{% url 'quiz' %}" 
+                           class="inline-block bg-gradient-to-r from-blue-500 to-purple-600 text-white font-bold py-3 px-6 rounded-xl hover:from-blue-600 hover:to-purple-700 transform hover:scale-105 transition-all duration-200 shadow-lg">
+                            <i class="fas fa-plus mr-2"></i>Add Quiz
+                        </a>
+                        <a href="{% url 'fill_blank' %}" 
+                           class="inline-block bg-gradient-to-r from-green-500 to-teal-600 text-white font-bold py-3 px-6 rounded-xl hover:from-green-600 hover:to-teal-700 transform hover:scale-105 transition-all duration-200 shadow-lg">
+                            <i class="fas fa-plus mr-2"></i>Add Fill Blank
+                        </a>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

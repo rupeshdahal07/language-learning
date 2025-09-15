@@ -81,7 +81,7 @@
     <!-- Sidebar -->
     <aside id="sidebar" class="fixed left-0 top-0 h-full w-72 bg-white sidebar-shadow z-50 sidebar-transition overflow-y-auto ">
         <!-- Header -->
-        <div class="p-6 border-b border-gray-100 bg-gradient-to-r from-blue-600 to-purple-600">
+        <div class="p-4 border-b border-gray-100 bg-gradient-to-r from-blue-600 to-purple-600">
             <div class="flex items-center">
                 
                 <div>
@@ -92,7 +92,7 @@
         </div>
         
         <!-- Navigation -->
-        <nav class="p-4 pb-10 ">
+        <nav class="p-2 pb-10 ">
             <ul class="space-y-3">
             <li>
                 <a href="{% url 'dashboard' %}"
@@ -269,7 +269,7 @@
                    {% endif %}
                    transition-all duration-200">
                 <i class="fas fa-info-circle mr-4 text-lg text-green-500"></i>
-                <span class="font-medium">Info Level Grammar</span>
+                <span class="font-medium">Info(Meaning) Level Grammar</span>
                 </a>
             </li>
             <li>
@@ -286,16 +286,16 @@
                 </a>
             </li>
             <li>
-                <a href="{% url 'create_rearrange' %}"
+                <a href="{% url 'conversation' %}"
                    class="nav-link flex items-center p-4 rounded-xl
-                   {% if request.resolver_match.url_name == 'create_rearrange' %}
+                   {% if request.resolver_match.url_name == 'conversation' %}
                    bg-gradient-to-r from-green-100 to-green-200 text-green-800 shadow-xl
                    {% else %}
                    text-gray-700 hover:bg-gradient-to-r hover:from-gray-50 hover:to-gray-100 hover:shadow-md
                    {% endif %}
                    transition-all duration-200">
-                <i class="fas fa-random mr-4 text-lg text-purple-500"></i>
-                <span class="font-medium">Rearrange Form</span>
+                <i class="fas fa-comments mr-4 text-lg text-purple-500"></i>
+                <span class="font-medium">Conversation Form</span>
                 </a>
             </li>
 
@@ -352,7 +352,7 @@
                    {% endif %}
                    transition-all duration-200">
                 <i class="fas fa-font mr-4 text-lg text-green-500"></i>
-                <span class="font-medium">Letter Tracing List</span>
+                <span class="font-medium">Letter Tracing Questions</span>
                 </a>
             </li>
             <li>
@@ -365,7 +365,20 @@
                    {% endif %}
                    transition-all duration-200">
                 <i class="fas fa-list-ul mr-4 text-lg text-blue-500"></i>
-                <span class="font-medium">Quiz List</span>
+                <span class="font-medium">Quiz Questions</span>
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'list_word_games' %}"
+                   class="nav-link flex items-center p-4 rounded-xl
+                   {% if request.resolver_match.url_name == 'list_word_games' %}
+                   bg-gradient-to-r from-green-100 to-green-200 text-green-800 shadow-xl
+                   {% else %}
+                   text-gray-700 hover:bg-gradient-to-r hover:from-gray-50 hover:to-gray-100 hover:shadow-md
+                   {% endif %}
+                   transition-all duration-200">
+                <i class="fas fa-puzzle-piece mr-4 text-lg text-red-500"></i>
+                <span class="font-medium">Word Game Questions</span>
                 </a>
             </li>
             <li>
@@ -418,7 +431,7 @@
         </nav>
         
         <!-- Letter Info Panel -->
-        <div class="sticky bottom-0 left-0 right-0 p-4 border-t border-gray-100 bg-gradient-to-r from-gray-50 to-gray-100 z-10">
+        <div class="sticky bottom-0 left-0 right-0 p-2 border-t border-gray-100 bg-gradient-to-r from-gray-50 to-gray-100 z-10">
             <div class="flex items-center justify-center">
             <form method="post" action="{% url 'logout' %}">
                 {% csrf_token %}

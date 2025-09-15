@@ -197,17 +197,17 @@ def list_paths(request):
     """
     try:
         # Fetch all paths from Supabase
-        response = supabase.table("paths").select("*").order("created_at", desc=True).execute()
+        response = supabase.table("paths").select("*").order("created_at").execute()
         paths = response.data
         lesson_data = []
-        for path in paths:
-            lessons = path.get('lessons', [])
-            path_lessons = []
-            for lesson_id in lessons:
-                data = supabase.table('lessons').select('*').eq('id', lesson_id).single().execute()
-                if data.data:
-                    path_lessons.append(data.data)
-            lesson_data.append({'path_id': path['id'], 'lessons': path_lessons})
+        # for path in paths:
+        #     lessons = path.get('lessons', [])
+        #     path_lessons = []
+        #     for lesson_id in lessons:
+        #         data = supabase.table('lessons').select('*').eq('id', lesson_id).single().execute()
+        #         if data.data:
+        #             path_lessons.append(data.data)
+        #     lesson_data.append({'path_id': path['id'], 'lessons': path_lessons})
         count = supabase.table("paths").select("id", count="exact").limit(0).execute()
         
         context = {
@@ -223,6 +223,101 @@ def list_paths(request):
             'total_count': 0
         }
     return render(request, 'path_list.html', context)
+
+def path_detail(request, id):
+    data = supabase.table('lessons').select('*').order("created_at").eq('path_id', id).execute()
+
+    context = {
+        'lesson_data': data.data,  
+    }
+    return render(request, 'path_detail.html', context=context)
+
+def lesson_detail(request, id):
+    try:
+        # Fetch the lesson data
+        lesson_response = supabase.table('lessons').select('*').eq('id', id).single().execute()
+        lesson = lesson_response.data
+        
+        if not lesson:
+            return render(request, 'lesson_detail.html', {'error': 'Lesson not found'})
+        
+        lesson_questions = []
+        
+        # Iterate through each level in the lesson data
+        for level_data in lesson.get('data', []):
+            level_type = level_data.get('level_type')
+            level_id = level_data.get('level_id')
+            sub_level_id = level_data.get('sub_level_id', 0)
+            
+            # Determine which table to query based on level_type
+            table_map = {
+                0: 'letters',           # Letters/Alphabet
+                1: 'quiz_levels',       # Quiz questions
+                2: 'word_game_level',   # Word games
+                3: 'match_the_following_level',  # Match the following
+                4: 'word_form_levels',  # Word form exercises
+                5: 'fill_blanks_level', # Fill in the blanks
+                6: 'information_level', # Information levels
+                7: 'meaning_level',     # Meaning exercises
+                8: 'quiz_levels',       # Additional quiz type
+                9: 'rearrange_words_level',  # Rearrange words
+                10: 'conversation_level'     # Conversations
+            }
+            
+            table_name = table_map.get(level_type)
+            if not table_name:
+                continue
+                
+            try:
+                # For letters, we need to handle sub_level_id differently
+                if level_type == 0 and sub_level_id > 0:
+                    question_response = supabase.table(table_name).select('*').eq('id', sub_level_id).execute()
+                else:
+                    question_response = supabase.table(table_name).select('*').eq('id', level_id).execute()
+                
+                if question_response.data:
+                    for question in question_response.data:
+                        question['level_type'] = level_type
+                        question['level_type_name'] = get_level_type_name(level_type)
+                        lesson_questions.append(question)
+                        
+            except Exception as e:
+                print(f"Error fetching data from {table_name}: {str(e)}")
+                continue
+        
+        context = {
+            'lesson': lesson,
+            'lesson_questions': lesson_questions,
+            'total_questions': len(lesson_questions)
+        }
+        
+    except Exception as e:
+        context = {
+            'lesson': None,
+            'lesson_questions': [],
+            'error': f'Error fetching lesson data: {str(e)}',
+            'total_questions': 0
+        }
+    
+    return render(request, 'lesson_detail.html', context)
+
+def get_level_type_name(level_type):
+    """Helper function to get human-readable level type names"""
+    type_names = {
+        0: 'Letters/Alphabet',
+        1: 'Quiz Questions',
+        2: 'Word Games',
+        3: 'Match the Following',
+        4: 'Word Form Exercises',
+        5: 'Fill in the Blanks',
+        6: 'Information Levels',
+        7: 'Meaning Exercises',
+        8: 'Quiz Questions (Type 2)',
+        9: 'Rearrange Words',
+        10: 'Conversations'
+    }
+    return type_names.get(level_type, 'Unknown Type')
+
 
 
 #--------------------Lession-------------------------------------------->>>
@@ -872,13 +967,11 @@ def create_word_game(request):
 
     if request.method == 'POST':
         title = request.POST.get('title')
-        options = [
-            request.POST.get('option_0'),
-            request.POST.get('option_1'),
-            request.POST.get('option_2'),
-            request.POST.get('option_3'),
-            request.POST.get('option_4'),
-        ]
+        options = []
+        for i in range(5):
+            opt = request.POST.get(f'option_{i}')
+            if opt is not None:
+                options.append(opt)
 
         path_id = request.POST.get('path_id')
         lesson_id = request.POST.get('lesson_id')
@@ -904,7 +997,25 @@ def create_word_game(request):
     
     return render(request, 'word_game.html', {'path_ids': path_ids, 'lesson_ids': lesson_ids})
 
-
+def list_word_games(request):
+    """
+    View to display all word game levels from the database.
+    """
+    try:
+        response = supabase.table("word_game_level").select("*").order("created_at", desc=True).execute()
+        word_games = response.data
+        total_count = len(word_games)
+        context = {
+            'word_games': word_games,
+            'total_count': total_count
+        }
+    except Exception as e:
+        context = {
+            'word_games': [],
+            'error': f'Error fetching data: {str(e)}',
+            'total_count': 0
+        }
+    return render(request, 'word_game_list.html', context)
 
 
 def create_letters(request):
@@ -1326,7 +1437,7 @@ def create_rearrange(request):
         
         try:
             result = supabase.table("rearrange_words_level").insert(rearrange_data).execute()
-            ServiceLesson(result, 9, lesson_id)  # Assuming level_type 9 for rearrange
+            ServiceLesson(result, 9, lesson_id)  
             return render(request, 'rearrange.html', {
                 'success': 'Rearrange exercise created successfully!',
                 'path_ids': path_ids,
@@ -1736,3 +1847,96 @@ def edit_letter(request, letter_id):
         
     except Exception as e:
         return render(request, 'letters_tracing.html', {'error': f'Letter not found: {str(e)}'})
+    
+
+
+def edit_word_game(request, word_game_id):
+    try:
+        # Fetch existing word game
+        print(f'word_game_id:{word_game_id}')
+        word_game_response = supabase.table("word_game_level").select("*").eq("id", word_game_id).single().execute()
+        
+        # Check if word game exists
+        if not word_game_response.data:
+            return render(request, 'word_game.html', {
+                'error': 'Word game not found.',
+                'path_ids': [],
+                'lesson_ids': [],
+                'is_edit': False
+            })
+            
+        word_game = word_game_response.data
+        print(f'word game data: {word_game}')
+
+        # Get paths and lessons for dropdowns
+        paths = supabase.table('paths').select("id, title").execute()
+        lessons = supabase.table('lessons').select("id, lesson_title").execute()
+
+        lesson_ids = [{'id': row['id'], 'title': row.get('lesson_title', str(row['id']))} for row in lessons.data]
+        path_ids = [{'id': row['id'], 'title': row.get('title', str(row['id']))} for row in paths.data]
+
+        if request.method == 'POST':
+            title = request.POST.get('title')
+            
+            # Collect options (filter out empty ones)
+            options = []
+            for i in range(5):
+                opt = request.POST.get(f'option_{i}')
+                if opt and opt.strip():
+                    options.append(opt.strip())
+                    
+            # Collect valid words (filter out empty ones)
+            valid_words = []
+            idx = 0
+            while True:
+                word = request.POST.get(f'valid_{idx}')
+                if word is None:
+                    break
+                if word.strip():
+                    valid_words.append(word.strip())
+                idx += 1
+
+            # Validation
+            if not title or len(options) < 3 or len(valid_words) < 2:
+                return render(request, 'word_game.html', {
+                    'error': 'Title, at least 3 options, and at least 2 valid words are required.',
+                    'word_game': word_game,
+                    'path_ids': path_ids,
+                    'lesson_ids': lesson_ids,
+                    'is_edit': True
+                })
+
+            update_data = {
+                'title': title,
+                'options': options,
+                'valid_words': valid_words
+            }
+            
+            supabase.table("word_game_level").update(update_data).eq("id", word_game_id).execute()
+            return redirect('list_word_games')
+
+        context = {
+            'word_game': word_game,
+            'path_ids': path_ids,
+            'lesson_ids': lesson_ids,
+            'is_edit': True
+        }
+        return render(request, 'word_game.html', context)
+        
+    except Exception as e:
+        # Get paths and lessons for error case too
+        try:
+            paths = supabase.table('paths').select("id, title").execute()
+            lessons = supabase.table('lessons').select("id, lesson_title").execute()
+            lesson_ids = [{'id': row['id'], 'title': row.get('lesson_title', str(row['id']))} for row in lessons.data]
+            path_ids = [{'id': row['id'], 'title': row.get('title', str(row['id']))} for row in paths.data]
+        except:
+            lesson_ids = []
+            path_ids = []
+            
+        return render(request, 'word_game.html', {
+            'error': f'Word game not found: {str(e)}',
+            'path_ids': path_ids,
+            'lesson_ids': lesson_ids,
+            'is_edit': False
+        })

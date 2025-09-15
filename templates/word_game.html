@@ -3,7 +3,7 @@
 <div class="container mx-auto px-4 py-8">
     <div class="max-w-4xl mx-auto bg-white/90 backdrop-blur-sm rounded-3xl shadow-2xl p-8">
         <h1 class="text-4xl font-bold text-center bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent mb-8">
-            Create Word Game
+            {% if is_edit %}Edit Word Game{% else %}Create Word Game{% endif %}
         </h1>
         {% if error %}
             <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-xl mb-4">
@@ -16,7 +16,7 @@
                 {{ success }}
             </div>
         {% endif %}
-        <form id="wordGameForm" method="POST" action="{% url 'create_word_game' %}" class="space-y-8">
+        <form id="wordGameForm" method="POST" action="{% if is_edit %}{% url 'edit_word_game' word_game.id %}{% else %}{% url 'create_word_game' %}{% endif %}" class="space-y-8">
             {% csrf_token %}
 
             <!-- Path Dropdown -->
@@ -30,9 +30,9 @@
                         required
                         class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-200 outline-none"
                     >
-                        <option value="" disabled selected>Select a path</option>
+                        <option value="" disabled {% if not is_edit %}selected{% endif %}>Select a path</option>
                         {% for path in path_ids %}
-                            <option value="{{ path.id }}">{{ path.title }}</option>
+                            <option value="{{ path.id }}" {% if is_edit and word_game.path_id == path.id %}selected{% endif %}>{{ path.title }}</option>
                         {% endfor %}
                     </select>
                 </div>
@@ -46,9 +46,9 @@
                         required
                         class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-200 outline-none"
                     >
-                        <option value="" disabled selected>Select a lesson</option>
+                        <option value="" disabled {% if not is_edit %}selected{% endif %}>Select a lesson</option>
                         {% for lesson in lesson_ids %}
-                            <option value="{{ lesson.id }}">{{ lesson.title }}</option>
+                            <option value="{{ lesson.id }}" {% if is_edit and word_game.lesson_id == lesson.id %}selected{% endif %}>{{ lesson.title }}</option>
                         {% endfor %}
                     </select>
                 </div>
@@ -62,6 +62,7 @@
                         type="text" 
                         name="title" 
                         required
+                        value="{% if is_edit %}{{ word_game.title }}{% endif %}"
                         class="w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all duration-200 outline-none"
                         placeholder="Enter a title"
                     >
@@ -73,41 +74,63 @@
                     Game Options (e.g., scrambled words)
                 </label>
                 <div id="optionsContainer" class="space-y-3">
-                    <input 
-                        type="text" 
-                        name="option_0" 
-                        required
-                        class="w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-green-500 focus:ring-2 focus:ring-green-100 transition-all duration-200 outline-none"
-                        placeholder="Option 1"
-                    >
-                    <input 
-                        type="text" 
-                        name="option_1" 
-                        required
-                        class="w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-green-500 focus:ring-2 focus:ring-green-100 transition-all duration-200 outline-none"
-                        placeholder="Option 2"
-                    >
-                    <input 
-                        type="text" 
-                        name="option_2" 
-                        required
-                        class="w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-green-500 focus:ring-2 focus:ring-green-100 transition-all duration-200 outline-none"
-                        placeholder="Option 3"
-                    >
-                    <input 
-                        type="text" 
-                        name="option_3" 
-                        
-                        class="w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-green-500 focus:ring-2 focus:ring-green-100 transition-all duration-200 outline-none"
-                        placeholder="Option 4"
-                    >
-                    <input 
-                        type="text" 
-                        name="option_4" 
-                        
-                        class="w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-green-500 focus:ring-2 focus:ring-green-100 transition-all duration-200 outline-none"
-                        placeholder="Option 5"
-                    >
+                    {% if is_edit %}
+                        {% for option in word_game.options %}
+                            <input 
+                                type="text" 
+                                name="option_{{ forloop.counter0 }}" 
+                                {% if forloop.counter0 < 3 %}required{% endif %}
+                                value="{{ option }}"
+                                class="w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-green-500 focus:ring-2 focus:ring-green-100 transition-all duration-200 outline-none"
+                                placeholder="Option {{ forloop.counter }}"
+                            >
+                        {% endfor %}
+                        <!-- Add remaining option fields up to 5 total -->
+                        {% for i in "012345"|make_list %}
+                            {% if forloop.counter0|add:word_game.options|length < 5 %}
+                                <input 
+                                    type="text" 
+                                    name="option_{{ word_game.options|length|add:forloop.counter0 }}" 
+                                    class="w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-green-500 focus:ring-2 focus:ring-green-100 transition-all duration-200 outline-none"
+                                    placeholder="Option {{ word_game.options|length|add:forloop.counter }}"
+                                >
+                            {% endif %}
+                        {% endfor %}
+                    {% else %}
+                        <input 
+                            type="text" 
+                            name="option_0" 
+                            required
+                            class="w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-green-500 focus:ring-2 focus:ring-green-100 transition-all duration-200 outline-none"
+                            placeholder="Option 1"
+                        >
+                        <input 
+                            type="text" 
+                            name="option_1" 
+                            required
+                            class="w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-green-500 focus:ring-2 focus:ring-green-100 transition-all duration-200 outline-none"
+                            placeholder="Option 2"
+                        >
+                        <input 
+                            type="text" 
+                            name="option_2" 
+                            required
+                            class="w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-green-500 focus:ring-2 focus:ring-green-100 transition-all duration-200 outline-none"
+                            placeholder="Option 3"
+                        >
+                        <input 
+                            type="text" 
+                            name="option_3" 
+                            class="w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-green-500 focus:ring-2 focus:ring-green-100 transition-all duration-200 outline-none"
+                            placeholder="Option 4"
+                        >
+                        <input 
+                            type="text" 
+                            name="option_4" 
+                            class="w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-green-500 focus:ring-2 focus:ring-green-100 transition-all duration-200 outline-none"
+                            placeholder="Option 5"
+                        >
+                    {% endif %}
                 </div>
             </div>
 
@@ -117,35 +140,60 @@
                     Valid Words (correct answers)
                 </label>
                 <div id="validWordsContainer" class="space-y-3">
-                    <input 
-                        type="text" 
-                        name="valid_0" 
-                        required
-                        class="w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all duration-200 outline-none"
-                        placeholder="Valid Word 1"
-                    >
-                    <input 
-                        type="text" 
-                        name="valid_1" 
-                        required
-                        class="w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all duration-200 outline-none"
-                        placeholder="Valid Word 2"
-                    >
-                    <input 
-                        type="text" 
-                        name="valid_2" 
-                        
-                        class="w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all duration-200 outline-none"
-                        placeholder="Valid Word 3"
-                    >
-                    <input 
-                        type="text" 
-                        name="valid_3" 
-                        
-                        class="w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all duration-200 outline-none"
-                        placeholder="Valid Word 4"
-                    >
+                    {% if is_edit %}
+                        {% for valid_word in word_game.valid_words %}
+                            <input 
+                                type="text" 
+                                name="valid_{{ forloop.counter0 }}" 
+                                {% if forloop.counter0 < 2 %}required{% endif %}
+                                value="{{ valid_word }}"
+                                class="w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all duration-200 outline-none"
+                                placeholder="Valid Word {{ forloop.counter }}"
+                            >
+                        {% endfor %}
+                        <!-- Add extra empty fields if needed -->
+                        {% if word_game.valid_words|length < 4 %}
+                            {% for i in "0123456789"|make_list %}
+                                {% if forloop.counter0|add:word_game.valid_words|length < 4 %}
+                                    <input 
+                                        type="text" 
+                                        name="valid_{{ word_game.valid_words|length|add:forloop.counter0 }}" 
+                                        class="w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all duration-200 outline-none"
+                                        placeholder="Valid Word {{ word_game.valid_words|length|add:forloop.counter }}"
+                                    >
+                                {% endif %}
+                            {% endfor %}
+                        {% endif %}
+                    {% else %}
+                        <input 
+                            type="text" 
+                            name="valid_0" 
+                            required
+                            class="w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all duration-200 outline-none"
+                            placeholder="Valid Word 1"
+                        >
+                        <input 
+                            type="text" 
+                            name="valid_1" 
+                            required
+                            class="w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all duration-200 outline-none"
+                            placeholder="Valid Word 2"
+                        >
+                        <input 
+                            type="text" 
+                            name="valid_2" 
+                            class="w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all duration-200 outline-none"
+                            placeholder="Valid Word 3"
+                        >
+                        <input 
+                            type="text" 
+                            name="valid_3" 
+                            class="w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all duration-200 outline-none"
+                            placeholder="Valid Word 4"
+                        >
+                    {% endif %}
                 </div>
+                {% if not is_edit %}
                 <div class="flex gap-2 mt-3">
                     <button 
                         type="button" 
@@ -155,36 +203,47 @@
                         + Add Valid Word Field
                     </button>
                 </div>
+                {% endif %}
             </div>
 
-            <button 
-                type="submit" 
-                class="w-full bg-gradient-to-r from-green-500 to-blue-600 text-white font-bold py-4 px-6 rounded-xl hover:from-green-600 hover:to-blue-700 transform hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl"
-            >
-                Submit Word Game
-            </button>
+            <div class="flex gap-4">
+                <button 
+                    type="submit" 
+                    class="flex-1 bg-gradient-to-r from-green-500 to-blue-600 text-white font-bold py-4 px-6 rounded-xl hover:from-green-600 hover:to-blue-700 transform hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl"
+                >
+                    {% if is_edit %}Update Word Game{% else %}Submit Word Game{% endif %}
+                </button>
+                {% if is_edit %}
+                    <a href="{% url 'list_word_games' %}" 
+                       class="px-6 py-4 bg-gray-500 text-white font-bold rounded-xl hover:bg-gray-600 transition-all duration-200 text-center">
+                        Cancel
+                    </a>
+                {% endif %}
+            </div>
         </form>
         {% include "unicode.html" %}
     </div>
 </div>
+
+{% if not is_edit %}
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         const validWordsContainer = document.getElementById('validWordsContainer');
         const addValidBtn = document.getElementById('addValidBtn');
-        let extraValidCount = 0;
+        let extraValidCount = 4; // Start from 4 since we have valid_0 to valid_3
 
         addValidBtn.addEventListener('click', function() {
             const input = document.createElement('input');
             input.type = "text";
             input.name = `valid_${extraValidCount}`;
-            input.required = true;
             input.className = "w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all duration-200 outline-none";
-            input.placeholder = `Extra Valid Word ${extraValidCount + 1}`;
+            input.placeholder = `Extra Valid Word ${extraValidCount - 3}`;
             validWordsContainer.appendChild(input);
             extraValidCount++;
         });
     });
 </script>
+{% endif %}
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {

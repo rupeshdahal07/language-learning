@@ -23,5 +23,7 @@ urlpatterns = [
     path("accounts/", include("accounts.urls")),
     
     #this is for api that intaract with uitity to crud the user progress
-    path('api/', include('api.urls'))
+    path('api/', include('api.urls')),
+
+    path('community/', include('community.urls'))
 ]

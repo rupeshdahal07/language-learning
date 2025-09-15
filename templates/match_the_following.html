@@ -2,9 +2,15 @@
 {% block content %}
 <div class="container mx-auto px-4 py-8">
     <div class="max-w-4xl mx-auto bg-white/90 backdrop-blur-sm rounded-3xl shadow-2xl p-8">
-        <h1 class="text-4xl font-bold text-center bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-8">
-            Match the Following
-        </h1>
+        {% if is_edit %}
+            <h1 class="text-4xl font-bold text-center bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-8">
+                Edit Match the Following
+            </h1>
+        {% else %}
+            <h1 class="text-4xl font-bold text-center bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-8">
+                Match the Following
+            </h1>
+        {% endif %}
         
         {% if success %}
             <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
@@ -18,10 +24,11 @@
             </div>
         {% endif %}
         
-        <form id="matchForm" method="POST" action="{% url 'match_the_following' %}" class="space-y-6">
+        <form id="matchForm" method="POST" action="{% if is_edit %}{% url 'edit_match_following' match_exercise.id %}{% else %}{% url 'match_the_following' %}{% endif %}" class="space-y-6">
             {% csrf_token %}
 
             <!-- Path Dropdown -->
+            {% if not is_edit %}
                 <div>
                     <label for="path_id" class="block text-sm font-semibold text-gray-700 mb-2">
                         Path
@@ -54,7 +61,9 @@
                         {% endfor %}
                     </select>
                 </div>
-                <div>
+            {% endif %}
+
+            <div>
                 <label for="titleText" class="block text-sm font-semibold text-gray-700 mb-2">
                     Title Text
                 </label>
@@ -63,7 +72,7 @@
                     id="titleText" 
                     name="titleText" 
                     required
-                    value=""
+                    value="{% if is_edit %}{{ match_exercise.title|default:'' }}{% endif %}"
                     class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-200 outline-none"
                     placeholder="Enter the question"
                 >
@@ -117,7 +126,7 @@
                 type="submit" 
                 class="w-full bg-gradient-to-r from-green-500 to-blue-600 text-white font-bold py-4 px-6 rounded-xl hover:from-green-600 hover:to-blue-700 transform hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl"
             >
-                Create Match Exercise
+                {% if is_edit %}Update Match Exercise{% else %}Create Match Exercise{% endif %}
             </button>
         </form>
         {% include "unicode.html" %}
@@ -127,7 +136,7 @@
 <script>
 let pairCount = 0;
 
-function createPairElement(index) {
+function createPairElement(index, japaneseValue = '', nepaliValue = '') {
     return `
         <div class="pair-row bg-white rounded-lg border-2 border-gray-200 p-4" data-index="${index}">
             <div class="flex items-center space-x-4">
@@ -137,6 +146,7 @@ function createPairElement(index) {
                         type="text" 
                         name="japanese_${index}" 
                         required
+                        value="${japaneseValue}"
                         class="japanese-input px-3 py-2 border border-gray-300 rounded-lg focus:border-green-500 focus:ring-2 focus:ring-green-100 transition-all duration-200 outline-none"
                         placeholder="Japanese text"
                     >
@@ -144,6 +154,7 @@ function createPairElement(index) {
                         type="text" 
                         name="nepali_${index}" 
                         required
+                        value="${nepaliValue}"
                         class="nepali-input px-3 py-2 border border-gray-300 rounded-lg focus:border-green-500 focus:ring-2 focus:ring-green-100 transition-all duration-200 outline-none"
                         placeholder="Nepali or Romaji text"
                     >
@@ -163,9 +174,9 @@ function createPairElement(index) {
     `;
 }
 
-function addPair() {
+function addPair(japaneseValue = '', nepaliValue = '') {
     const container = document.getElementById('pairsContainer');
-    const newPairHTML = createPairElement(pairCount);
+    const newPairHTML = createPairElement(pairCount, japaneseValue, nepaliValue);
     container.insertAdjacentHTML('beforeend', newPairHTML);
     pairCount++;
     updatePreview();
@@ -201,15 +212,35 @@ function updatePreview() {
     });
 }
 
+// Function to clean text for display (remove HTML tags for preview)
+function cleanTextForDisplay(text) {
+    return text.replace(/<[^>]*>/g, '');
+}
+
 // Initialize form
 document.addEventListener('DOMContentLoaded', function() {
-    // Add initial 3 empty pairs
-    for (let i = 0; i < 3; i++) {
-        addPair();
-    }
+    {% if is_edit and match_exercise.data %}
+        // Load existing pairs for editing
+        const existingPairs = {{ match_exercise.data|safe }};
+        existingPairs.forEach(pair => {
+            const japaneseValue = pair.japanese || '';
+            const nepaliValue = cleanTextForDisplay(pair.nepali || '');
+            addPair(japaneseValue, nepaliValue);
+        });
+        
+        // If no pairs exist or less than 3, add empty ones
+        while (pairCount < 3) {
+            addPair();
+        }
+    {% else %}
+        // Add initial 3 empty pairs for new creation
+        for (let i = 0; i < 3; i++) {
+            addPair();
+        }
+    {% endif %}
     
     // Add event listeners
-    document.getElementById('addPairBtn').addEventListener('click', addPair);
+    document.getElementById('addPairBtn').addEventListener('click', () => addPair());
     
     // Add event listeners to existing inputs
     document.querySelectorAll('.nepali-input, .japanese-input').forEach(input => {
@@ -270,6 +301,7 @@ document.getElementById('matchForm').addEventListener('submit', function(e) {
 }
 </style>
 
+{% if not is_edit %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const pathSelect = document.getElementById('path_id');
@@ -300,4 +332,5 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 </script>
+{% endif %}
 {% endblock content %}
