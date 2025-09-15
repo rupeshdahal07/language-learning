@@ -1,0 +1,156 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Combined Words List{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Combined Words Exercises ({{ total_count }} total)</h3>
+                    <div class="card-tools">
+                        <a href="{% url 'combined_words' %}" class="btn btn-primary btn-sm">
+                            <i class="fas fa-plus"></i> Create New Combined Words
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if error %}
+                        <div class="alert alert-danger">{{ error }}</div>
+                    {% endif %}
+                    
+                    {% if combined_words %}
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Title</th>
+                                        <th>Letter Info</th>
+                                        <th>Individual Letters</th>
+                                        <th>Combined Words</th>
+                                        <th>Meaning</th>
+                                        <th>Use Cases</th>
+                                        <th>Image</th>
+                                        <th>Created</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for item in combined_words %}
+                                        <tr>
+                                            <td>{{ item.id }}</td>
+                                            <td>
+                                                <strong>{{ item.title }}</strong>
+                                            </td>
+                                            <td>
+                                                <strong>{{ item.letter_info.title }}</strong><br>
+                                                <small class="text-muted">{{ item.letter_info.meaning }}</small>
+                                            </td>
+                                            <td>
+                                                <div class="small">
+                                                    {% if item.letter_info.combinedWords.nepaliLetters %}
+                                                        <strong>Nepali:</strong>
+                                                        {% for letter in item.letter_info.combinedWords.nepaliLetters %}
+                                                            {{ letter|safe }}{% if not forloop.last %}, {% endif %}
+                                                        {% endfor %}<br>
+                                                        <strong>Japanese:</strong>
+                                                        {% for letter in item.letter_info.combinedWords.japaneseLetters %}
+                                                            {{ letter }}{% if not forloop.last %}, {% endif %}
+                                                        {% endfor %}
+                                                    {% else %}
+                                                        <!-- Fallback for old format -->
+                                                        <strong>Nepali:</strong> {{ item.letter_info.combinedWords.firstNepaliLetter|safe }}, {{ item.letter_info.combinedWords.secondNepaliLetter|safe }}<br>
+                                                        <strong>Japanese:</strong> {{ item.letter_info.combinedWords.firstJapaneseLetter }}, {{ item.letter_info.combinedWords.secondJapaneseLetter }}
+                                                    {% endif %}
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div class="small">
+                                                    <strong>Nepali:</strong> {{ item.letter_info.combinedWords.combinedNepaliWords|safe }}<br>
+                                                    <strong>Japanese:</strong> {{ item.letter_info.combinedWords.combinedJapaneseWords }}
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div class="small">
+                                                    <strong>English:</strong> {{ item.meaning.english }}<br>
+                                                    <strong>Romaji:</strong> {{ item.meaning.romaji }}<br>
+                                                    <strong>Japanese:</strong> {{ item.meaning.japanese }}
+                                                </div>
+                                            </td>
+                                            <td>
+                                                {% if item.use_cases %}
+                                                    <ul class="small mb-0">
+                                                        {% for use_case in item.use_cases %}
+                                                            <li>{{ use_case }}</li>
+                                                        {% endfor %}
+                                                    </ul>
+                                                {% else %}
+                                                    <span class="text-muted">None</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if item.image_url %}
+                                                    <img src="{{ item.image_url }}" alt="Image" style="width: 50px; height: 50px; object-fit: cover;">
+                                                {% else %}
+                                                    <span class="text-muted">No image</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>{{ item.created_at|date:"M d, Y" }}</td>
+                                            <td>
+                                                <div class="btn-group" role="group">
+                                                    <a href="{% url 'edit_combined_words' item.id %}" class="btn btn-sm btn-outline-primary">
+                                                        <i class="fas fa-edit"></i>
+                                                    </a>
+                                                    <button type="button" class="btn btn-sm btn-outline-danger" 
+                                                            onclick="deleteCombinedWords({{ item.id }})">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <h5>No combined words exercises found</h5>
+                            <p class="text-muted">Click the "Create New Combined Words" button to create your first exercise.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function deleteCombinedWords(id) {
+    if (confirm('Are you sure you want to delete this combined words exercise?')) {
+        fetch(`/delete-combined-words/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: JSON.stringify({id: id})
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Error deleting exercise: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error deleting exercise');
+        });
+    }
+}
+</script>
+{% endblock %}

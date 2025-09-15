@@ -56,6 +56,12 @@ urlpatterns = [
 
     path('create-rearrange/', views.create_rearrange, name='create_rearrange'),
 
-    path('create-conversation/', views.create_conversation, name='conversation')
+    path('create-conversation/', views.create_conversation, name='conversation'),
+
+
+    path('create-combined-word/', views.create_combined_words, name="combined_words"),
+    path('list-combined-word/', views.list_combined_words, name="list_combined_words"),
+    path('edit-combined-word/<int:combined_words_id>/', views.edit_combined_words, name="edit_combined_words"),
+
 
 ]

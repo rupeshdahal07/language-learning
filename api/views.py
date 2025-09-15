@@ -4,7 +4,7 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework import status
 from .utils import get_user_supabase
 import json
-from .supabase_client import supabase
+from app.supabase_client import supabase
 
 class UserPathProgressView(APIView):
     permission_classes = [IsAuthenticated]
@@ -372,6 +372,8 @@ class UserLevelProgressView(APIView):
 
 import random
 
+
+
 class UserRegistration(APIView):
     def post(self, request):
         try:
@@ -388,26 +390,37 @@ class UserRegistration(APIView):
                     status=status.HTTP_400_BAD_REQUEST
                 )
 
-            # Create username from name (taking first part + random number)
+            # Generate username
             name_parts = name.split()
             first_part = name_parts[0] if name_parts else name
             username = f"{first_part}{random.randrange(100, 100000)}"
 
-            # Create user in Supabase Auth
-            resp = supabase.auth.admin.create_user({
+            # Signup user (sends confirmation email automatically)
+            resp = supabase.auth.sign_up({
                 "email": email,
                 "password": password,
-                "phone": phone or None,
-                # "email_confirm": True
+                "options": {
+                    "data": {"phone": phone} if phone else {}
+                }
             })
+
+            # Check if signup failed
+            if not resp.user:
+                # Try to get error message from resp or fallback
+                error_message = getattr(resp, "message", "Signup failed.")
+                return Response(
+                    {"error": error_message},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
             user_id = resp.user.id
 
+            # Handle avatar upload
             image_url = None
             if avatar_file:
                 file_name = f"users/{avatar_file.name}"
                 try:
                     supabase.storage.from_("users").upload(file_name, avatar_file.read())
-                    # Use the correct public path for your Supabase bucket
                     image_url = f"/storage/v1/object/public/users/{file_name}"
                 except Exception as e:
                     return Response(
@@ -415,7 +428,7 @@ class UserRegistration(APIView):
                         status=status.HTTP_500_INTERNAL_SERVER_ERROR
                     )
 
-            # Insert user profile in users table
+            # Insert profile into users table
             user_data = {
                 "id": user_id,
                 "display_name": name,
@@ -451,10 +464,18 @@ class LearnDataView(APIView):
                 )
             
             # Get user basic info - use execute() instead of single() to handle missing users
-            user_response = supabase.table("users").select("display_name").eq("id", user_id).execute()
-            user_name = "User"  # Default name
-            if user_response.data and len(user_response.data) > 0:
-                user_name = user_response.data[0].get("display_name", "User")
+            user_response = supabase.table("users") \
+                .select("username") \
+                .eq("id", str(user_id)) \
+                .limit(1) \
+                .execute()
+
+            if user_response.data:
+                user_name = user_response.data
+            else:
+                user_name = "User"
+            print("User name:", user_name)
+
             
             # Get user path progress
             path_progress_response = supabase.table("user_path_progress").select("*").eq("user_id", user_id).execute()
@@ -464,40 +485,43 @@ class LearnDataView(APIView):
             streak = 2  
             
             # Calculate alphabet progress
-            # alphabet_total = supabase.table("letters").select("id", count="exact").limit(0).execute()
-            # alphabet_completed = supabase.table("user_level_progress").select("id", count="exact").is_("path_id", None).is_("lesson_id", None).limit(0).eq("user_id", user_id).execute()
+            alphabet_total = supabase.table("letters").select("id", count="exact").limit(0).execute()
+            alphabet_completed = supabase.table("user_level_progress").select("id", count="exact").is_("path_id", None).is_("lesson_id", None).limit(0).eq("user_id", user_id).execute()
             
-            # alphabet_progress = 0.0
-            # if alphabet_total.count and alphabet_total.count > 0:
-            #     completed_count = alphabet_completed.count or 0
-            #     alphabet_progress = min(completed_count / alphabet_total.count, 1.0)
+            alphabet_progress = 0.0
+            if alphabet_total.count and alphabet_total.count > 0:
+                completed_count = alphabet_completed.count or 0
+                alphabet_progress = min(completed_count / alphabet_total.count, 1.0)
             
-            # # Calculate vocab progress
-            # vocab_total = supabase.table("lessons").select("id", count="exact").eq("lesson_type", 4).limit(0).execute()
-            # vocab_completed_response = supabase.table("user_lesson_progress") \
-            #     .select("*, lessons!inner(lesson_type)") \
-            #     .eq("user_id", user_id) \
-            #     .eq("lessons.lesson_type", 4) \
-            #     .execute()
+                       # Calculate vocab progress
+            vocab_total = supabase.table("lessons").select("id", count="exact").eq("lesson_type", 4).limit(0).execute()
+            vocab_completed_response = supabase.table("user_lesson_progress") \
+                .select("*, lessons!inner(lesson_type)") \
+                .eq("user_id", user_id) \
+                .eq("lessons.lesson_type", 4) \
+                .execute()
             
-            # vocab_progress = 0.0
-            # if vocab_total.count and vocab_total.count > 0:
-            #     vocab_lesson_count = 0
-            #     for lesson_progress in vocab_completed_response.data or []:
-            #         if lesson_progress.get("lesson_progress", 0) > 0:
-            #             vocab_lesson_count += 1
-            #     vocab_progress = min(vocab_lesson_count / vocab_total.count, 1.0)
+            vocab_progress = 0.0
+            vocab_total_count = vocab_total.count or 0  # Handle None case
             
+            if vocab_total_count > 0:
+                vocab_lesson_count = 0
+                for lesson_progress in vocab_completed_response.data or []:
+                    lesson_progress_value = lesson_progress.get("lesson_progress", 0) or 0
+                    if lesson_progress_value > 0:
+                        vocab_lesson_count += 1
+                vocab_progress = min(vocab_lesson_count / vocab_total_count, 1.0)
+
             # # Calculate tracing progress (based on letters with specific criteria)
-            # tracing_progress = alphabet_progress  # Using same logic for now
+            tracing_progress = alphabet_progress  # Using same logic for now
             
             response_data = {
                 "name": user_name,
                 "streak": streak,
                 "path_progress": path_progress,
-                # "alphabet_progress": round(alphabet_progress, 2),
-                # "vocab_progress": round(vocab_progress, 2),
-                # "tracing_progress": round(tracing_progress, 2)
+                "alphabet_progress": round(alphabet_progress, 2),
+                "vocab_progress": round(vocab_progress, 2),
+                "tracing_progress": round(tracing_progress, 2)
             }
             
             return Response(response_data, status=status.HTTP_200_OK)

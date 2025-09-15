@@ -261,7 +261,8 @@ def lesson_detail(request, id):
                 7: 'meaning_level',     # Meaning exercises
                 8: 'quiz_levels',       # Additional quiz type
                 9: 'rearrange_words_level',  # Rearrange words
-                10: 'conversation_level'     # Conversations
+                10: 'conversation_level',     # Conversations
+                11: 'combined_words_level'   # Combined words
             }
             
             table_name = table_map.get(level_type)
@@ -314,7 +315,8 @@ def get_level_type_name(level_type):
         7: 'Meaning Exercises',
         8: 'Quiz Questions (Type 2)',
         9: 'Rearrange Words',
-        10: 'Conversations'
+        10: 'Conversations',
+        11: 'Combined Words'
     }
     return type_names.get(level_type, 'Unknown Type')
 
@@ -400,6 +402,8 @@ def get_level_ids(request):
         table = "meaning_level"
     elif lesson_type == '8':
         table = "quiz_lev   els"
+    elif lesson_type == '11':  # Combined words
+        table = "combined_words_level"
     else:
         return JsonResponse({'level_ids': []})
 
@@ -1940,3 +1944,276 @@ def edit_word_game(request, word_game_id):
             'lesson_ids': lesson_ids,
             'is_edit': False
         })
+    
+
+
+def create_combined_words(request):
+    paths = supabase.table('paths').select("id, title").execute()
+    lessons = supabase.table('lessons').select("id, lesson_title").execute()
+    
+    lesson_ids = []
+    for row in lessons.data:
+        title = row.get('lesson_title', str(row['id']))
+        lesson_ids.append({'id': row['id'], 'title': title})
+
+    path_ids = []
+    for row in paths.data:
+        title = row.get('title', str(row['id']))
+        path_ids.append({'id': row['id'], 'title': title})
+
+    if request.method == 'POST':
+        # Basic info
+        title = request.POST.get('title')
+        letter_info_title = request.POST.get('letter_info_title')
+        letter_info_meaning = request.POST.get('letter_info_meaning')
+        
+        # Collect individual letters/words dynamically
+        nepali_letters = []
+        japanese_letters = []
+        letter_index = 0
+        
+        while True:
+            nepali_letter = request.POST.get(f'nepali_letter_{letter_index}')
+            japanese_letter = request.POST.get(f'japanese_letter_{letter_index}')
+            
+            if nepali_letter is None or japanese_letter is None:
+                break
+                
+            if nepali_letter.strip() and japanese_letter.strip():
+                nepali_letters.append(nepali_letter.strip())
+                japanese_letters.append(japanese_letter.strip())
+            
+            letter_index += 1
+        
+        # Get combined words
+        combined_nepali_words = request.POST.get('combined_nepali_words')
+        combined_japanese_words = request.POST.get('combined_japanese_words')
+        
+        # Meaning data
+        romaji = request.POST.get('romaji')
+        english = request.POST.get('english')
+        japanese_meaning = request.POST.get('japanese_meaning')
+        
+        # Image upload
+        image_file = request.FILES.get('image')
+        
+        # Use cases
+        use_cases = []
+        usecase_count = 0
+        while True:
+            use_case = request.POST.get(f'use_case_{usecase_count}')
+            if use_case is None:
+                break
+            if use_case.strip():
+                use_cases.append(use_case.strip())
+            usecase_count += 1
+
+        path_id = request.POST.get('path_id')
+        lesson_id = request.POST.get('lesson_id')
+
+        # Validation
+        if not all([title, letter_info_title, letter_info_meaning, combined_nepali_words, 
+                   combined_japanese_words, romaji, english, japanese_meaning]) or \
+           len(nepali_letters) < 2 or len(japanese_letters) < 2:
+            return render(request, 'combined_words.html', {
+                'error': 'All required fields must be filled and at least 2 letters are required.',
+                'path_ids': path_ids,
+                'lesson_ids': lesson_ids
+            })
+
+        # Handle image upload
+        image_url = None
+        if image_file:
+            file_name = f"images/{image_file.name}"
+            try:
+                res = supabase.storage.from_("images").upload(file_name, image_file.read())
+                image_url = f"/storage/v1/object/public/images/{file_name}"
+            except Exception as e:
+                return render(request, 'combined_words.html', {
+                    'error': f'Image upload failed: {str(e)}',
+                    'path_ids': path_ids,
+                    'lesson_ids': lesson_ids
+                })
+
+        # Format Nepali text with Preeti font
+        formatted_nepali_letters = [f'(<font="Preeti font  SDF">{letter}</font>)' for letter in nepali_letters]
+        formatted_combined_nepali = f'(<font="Preeti font  SDF">{combined_nepali_words}</font>)'
+
+        # Create combined words structure
+        combined_words_structure = {
+            "nepaliLetters": formatted_nepali_letters,
+            "japaneseLetters": japanese_letters,
+            "combinedNepaliWords": formatted_combined_nepali,
+            "combinedJapaneseWords": combined_japanese_words
+        }
+
+        # Create data structure
+        combined_words_data = [{
+            "letter_info": {
+                "title": letter_info_title,
+                "meaning": letter_info_meaning,
+                "combinedWords": combined_words_structure
+            },
+            "use_cases": use_cases,
+            "image_url": image_url,
+            "title": title,
+            "meaning": {
+                "romaji": romaji,
+                "english": english,
+                "japanese": japanese_meaning
+            }
+        }]
+
+        print("Combined Words Data:", combined_words_data)
+        
+        try:
+            result = supabase.table("combined_words_level").insert(combined_words_data).execute()
+            ServiceLesson(result, 11, lesson_id)
+            return render(request, 'combined_words.html', {
+                'success': 'Combined words exercise created successfully!',
+                'path_ids': path_ids,
+                'lesson_ids': lesson_ids
+            })
+        except Exception as e:
+            return render(request, 'combined_words.html', {
+                'error': f'Error creating exercise: {str(e)}',
+                'path_ids': path_ids,
+                'lesson_ids': lesson_ids
+            })
+
+    return render(request, 'combined_words.html', {'path_ids': path_ids, 'lesson_ids': lesson_ids})
+
+def list_combined_words(request):
+    """
+    View to display all combined words exercises from the database.
+    """
+    try:
+        response = supabase.table("combined_words_level").select("*").order("created_at", desc=True).execute()
+        combined_words = response.data
+        total_count = len(combined_words)
+        
+        context = {
+            'combined_words': combined_words,
+            'total_count': total_count
+        }
+    except Exception as e:
+        context = {
+            'combined_words': [],
+            'error': f'Error fetching data: {str(e)}',
+            'total_count': 0
+        }
+    return render(request, 'combined_word_list.html', context)
+
+def edit_combined_words(request, combined_words_id):
+    """Edit combined words exercise"""
+    try:
+        # Fetch existing combined words
+        combined_words_response = supabase.table("combined_words_level").select("*").eq("id", combined_words_id).single().execute()
+        combined_words = combined_words_response.data
+        
+        # Get paths and lessons for dropdowns
+        paths = supabase.table('paths').select("id, title").execute()
+        lessons = supabase.table('lessons').select("id, lesson_title").execute()
+        
+        lesson_ids = [{'id': row['id'], 'title': row.get('lesson_title', str(row['id']))} for row in lessons.data]
+        path_ids = [{'id': row['id'], 'title': row.get('title', str(row['id']))} for row in paths.data]
+        
+        if request.method == 'POST':
+            # Get all form data
+            title = request.POST.get('title')
+            letter_info_title = request.POST.get('letter_info_title')
+            letter_info_meaning = request.POST.get('letter_info_meaning')
+            
+            # Collect individual letters/words dynamically
+            nepali_letters = []
+            japanese_letters = []
+            letter_index = 0
+            
+            while True:
+                nepali_letter = request.POST.get(f'nepali_letter_{letter_index}')
+                japanese_letter = request.POST.get(f'japanese_letter_{letter_index}')
+                
+                if nepali_letter is None or japanese_letter is None:
+                    break
+                    
+                if nepali_letter.strip() and japanese_letter.strip():
+                    nepali_letters.append(nepali_letter.strip())
+                    japanese_letters.append(japanese_letter.strip())
+                
+                letter_index += 1
+            
+            combined_nepali_words = request.POST.get('combined_nepali_words')
+            combined_japanese_words = request.POST.get('combined_japanese_words')
+            
+            romaji = request.POST.get('romaji')
+            english = request.POST.get('english')
+            japanese_meaning = request.POST.get('japanese_meaning')
+            
+            image_file = request.FILES.get('image')
+            
+            # Collect use cases
+            use_cases = []
+            usecase_count = 0
+            while True:
+                use_case = request.POST.get(f'use_case_{usecase_count}')
+                if use_case is None:
+                    break
+                if use_case.strip():
+                    use_cases.append(use_case.strip())
+                usecase_count += 1
+
+            # Handle image upload (keep existing if no new image)
+            image_url = combined_words.get('image_url')
+            if image_file:
+                file_name = f"images/{image_file.name}"
+                try:
+                    supabase.storage.from_("images").upload(file_name, image_file.read())
+                    image_url = f"/storage/v1/object/public/images/{file_name}"
+                except Exception as e:
+                    return render(request, 'combined_words.html', {
+                        'error': f'Image upload failed: {str(e)}',
+                        'combined_words': combined_words,
+                        'path_ids': path_ids,
+                        'lesson_ids': lesson_ids,
+                        'is_edit': True
+                    })
+
+            # Format Nepali text
+            formatted_nepali_letters = [f'(<font="Preeti font  SDF">{letter}</font>)' for letter in nepali_letters]
+            formatted_combined_nepali = f'(<font="Preeti font  SDF">{combined_nepali_words}</font>)'
+
+            # Update data structure
+            update_data = {
+                "letter_info": {
+                    "title": letter_info_title,
+                    "meaning": letter_info_meaning,
+                    "combinedWords": {
+                        "nepaliLetters": formatted_nepali_letters,
+                        "japaneseLetters": japanese_letters,
+                        "combinedNepaliWords": formatted_combined_nepali,
+                        "combinedJapaneseWords": combined_japanese_words
+                    }
+                },
+                "use_cases": use_cases,
+                "image_url": image_url,
+                "title": title,
+                "meaning": {
+                    "romaji": romaji,
+                    "english": english,
+                    "japanese": japanese_meaning
+                }
+            }
+
+            supabase.table("combined_words_level").update(update_data).eq("id", combined_words_id).execute()
+            return redirect('list_combined_words')
+
+        context = {
+            'combined_words': combined_words,
+            'path_ids': path_ids,
+            'lesson_ids': lesson_ids,
+            'is_edit': True
+        }
+        return render(request, 'combined_words.html', context)
+        
+    except Exception as e:
+        return render(request, 'combined_words.html', {'error': f'Combined words not found: {str(e)}'})
