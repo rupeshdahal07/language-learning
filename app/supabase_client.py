@@ -18,5 +18,5 @@ auth = supabase.auth.sign_in_with_password({
     "password": env('SUPABASE_PASSWORD')
 })
 access_token = auth.session.access_token
-#print(f"access_tocken: {access_token}")
+print(f"access_tocken: {access_token}")
 supabase.postgrest.auth(access_token)

@@ -406,7 +406,6 @@ class UserRegistration(APIView):
 
             # Check if signup failed
             if not resp.user:
-                # Try to get error message from resp or fallback
                 error_message = getattr(resp, "message", "Signup failed.")
                 return Response(
                     {"error": error_message},
@@ -465,7 +464,7 @@ class ResetUserPassword(APIView):
             # Send password reset email using Supabase
             resp = supabase.auth.reset_password_email(
                 email,
-                options={"redirectTo": "http://localhost:8000/api/reset-password"}
+                options={"redirectTo": "http://13.229.98.72:8000/api/reset-password"}
             )
             # Supabase returns None if successful, error otherwise
             if resp is not None and hasattr(resp, "message"):
@@ -505,12 +504,12 @@ def reset_password(request):
             if resp:
                 return HttpResponse("✅ Password has been reset. You can now log in.")
             else:
-                return render(request, "reset_password.html", {
+                return render(request, "account/reset_password.html", {
                     "error": "Failed to reset password. Try again.",
                     "token": token
                 })
         except Exception as e:
-            return render(request, "reset_password.html", {
+            return render(request, "account/reset_password.html", {
                 "error": f"Error: {str(e)}",
                 "token": token
             })
