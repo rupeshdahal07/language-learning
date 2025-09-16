@@ -522,7 +522,7 @@ def reset_password(request):
                 "refresh_token": refresh_token
             })
 
-        if len(new_password) < 8:  # Add password validation
+        if len(new_password) < 8:
             return render(request, "account/reset_password.html", {
                 "error": "Password must be at least 8 characters long.",
                 "access_token": access_token,
@@ -530,13 +530,23 @@ def reset_password(request):
             })
 
         try:
-            # Set the session with the recovery tokens
-            session_response = supabase.auth.set_session(access_token, refresh_token)
+            # Create a new supabase client with the recovery session
+            from supabase import create_client
+            import os
             
-            # Now update the password
-            resp = supabase.auth.update_user({"password": new_password})
+            # Create client for this specific session
+            session_supabase = create_client(
+                os.environ.get("SUPABASE_URL"), 
+                os.environ.get("SUPABASE_ANON_KEY")
+            )
             
-            if resp:
+            # Set the session
+            session_supabase.auth.set_session(access_token, refresh_token)
+            
+            # Update the password
+            resp = session_supabase.auth.update_user({"password": new_password})
+            
+            if resp.user:
                 return HttpResponse("✅ Password has been reset successfully. You can now log in with your new password.")
             else:
                 return render(request, "account/reset_password.html", {
