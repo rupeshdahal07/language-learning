@@ -4,7 +4,9 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework import status
 from .utils import get_user_supabase
 import json
-from app.supabase_client import supabase
+from .supabase_client import supabase
+from django.shortcuts import render
+from django.http import HttpResponse
 
 class UserPathProgressView(APIView):
     permission_classes = [IsAuthenticated]
@@ -372,8 +374,6 @@ class UserLevelProgressView(APIView):
 
 import random
 
-
-
 class UserRegistration(APIView):
     def post(self, request):
         try:
@@ -444,6 +444,105 @@ class UserRegistration(APIView):
                 {"error": f"Error creating user: {str(e)}"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+        
+
+class ResetUserPassword(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        """
+        Send a password reset link to the user's email.
+        Expects: { "email": "user@example.com" }
+        """
+        try:
+            email = request.data.get("email", "").strip()
+            if not email:
+                return Response(
+                    {"error": "Email is required."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            # Send password reset email using Supabase
+            resp = supabase.auth.reset_password_email(
+                email,
+                options={"redirectTo": "http://localhost:8000/api/reset-password"}
+            )
+            # Supabase returns None if successful, error otherwise
+            if resp is not None and hasattr(resp, "message"):
+                return Response(
+                    {"error": getattr(resp, "message", "Failed to send reset email.")},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            return Response(
+                {"message": "Password reset link sent to email."},
+                status=status.HTTP_200_OK
+            )
+        except Exception as e:
+            return Response(
+                {"error": f"Error sending reset email: {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+        
+def reset_password(request):
+    token = request.GET.get("access_token", "")
+    if request.method == "POST":
+        new_password = request.POST.get("password")
+        confirm_password = request.POST.get("confirm_password")
+
+        if not new_password or new_password != confirm_password:
+            return render(request, "reset_password.html", {
+                "error": "Passwords do not match.",
+                "token": token
+            })
+
+        try:
+            # Supabase update user password using token
+            resp = supabase.auth.admin.update_user_by_id(
+                user_id=None,  # token-based reset, user_id not needed
+                attributes={"password": new_password}
+            )
+            if resp:
+                return HttpResponse("✅ Password has been reset. You can now log in.")
+            else:
+                return render(request, "reset_password.html", {
+                    "error": "Failed to reset password. Try again.",
+                    "token": token
+                })
+        except Exception as e:
+            return render(request, "reset_password.html", {
+                "error": f"Error: {str(e)}",
+                "token": token
+            })
+
+    return render(request, "account/reset_password.html", {"token": token})
+
+
+
+class CheckUserVerified(APIView):
+    def get(self, request):
+        user_id = request.query_params.get("user_id")
+        if not user_id:
+            return Response({"error": "user_id is required"}, status=400)
+
+        try:
+            # Use admin API to get user info from auth.users
+            resp = supabase.auth.admin.get_user_by_id(user_id)
+            
+            if not resp.user:
+                return Response({"error": "User not found"}, status=404)
+
+            user = resp.user
+            verified = user.email_confirmed_at is not None
+
+            return Response({
+                "id": user.id,
+                "email": user.email,
+                "verified": verified
+            }, status=200)
+
+        except Exception as e:
+            return Response({"error": str(e)}, status=500)
 
 
 class LearnDataView(APIView):

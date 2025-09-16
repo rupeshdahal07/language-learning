@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import UserPathProgressView, UserLessonProgressView, UserLevelProgressView, UserRegistration, LearnDataView
+from .views import UserPathProgressView, UserLessonProgressView, UserLevelProgressView, UserRegistration, LearnDataView, ResetUserPassword, reset_password, CheckUserVerified
 
 urlpatterns = [
     # User Path Progress CRUD operations
@@ -8,6 +8,13 @@ urlpatterns = [
     path('user-level-progress/', UserLevelProgressView.as_view(), name='user-level-progress'),
     path('user-create/', UserRegistration.as_view(), name='user-create'),
     path('learn-data/', LearnDataView.as_view(), name='learn_data'),
+
+    path('reset-password-link/', ResetUserPassword.as_view(), name='reset-password' ),
+    path("reset-password/", reset_password, name="reset_password"),
+
+    path('is-verified/', CheckUserVerified.as_view(), name='is_verified')
+
+
     # Bulk operations for adding completed lessons
     #path('user-path-progress/add-lesson/', UserPathProgressBulkView.as_view(), name='user-path-progress-add-lesson'),
 ]
