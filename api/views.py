@@ -499,38 +499,63 @@ class ResetUserPassword(APIView):
             )
         
 def reset_password(request):
-    token = request.GET.get("token", "")
+    # Get tokens from URL parameters (sent by Supabase after email verification)
+    access_token = request.GET.get("access_token", "")
+    refresh_token = request.GET.get("refresh_token", "")
+    token_type = request.GET.get("token_type", "")
+    recovery_type = request.GET.get("type", "")
+    
+    # Verify this is a valid recovery session
+    if recovery_type != "recovery" or not access_token:
+        return render(request, "account/reset_password.html", {
+            "error": "Invalid or expired reset link. Please request a new one."
+        })
+
     if request.method == "POST":
         new_password = request.POST.get("password")
         confirm_password = request.POST.get("confirm_password")
 
         if not new_password or new_password != confirm_password:
-            return render(request, "reset_password.html", {
+            return render(request, "account/reset_password.html", {
                 "error": "Passwords do not match.",
-                "token": token
+                "access_token": access_token,
+                "refresh_token": refresh_token
+            })
+
+        if len(new_password) < 8:  # Add password validation
+            return render(request, "account/reset_password.html", {
+                "error": "Password must be at least 8 characters long.",
+                "access_token": access_token,
+                "refresh_token": refresh_token
             })
 
         try:
-            # Supabase update user password using token
-            resp = supabase.auth.admin.update_user_by_id(
-                user_id=None,  # token-based reset, user_id not needed
-                attributes={"password": new_password}
-            )
+            # Set the session with the recovery tokens
+            session_response = supabase.auth.set_session(access_token, refresh_token)
+            
+            # Now update the password
+            resp = supabase.auth.update_user({"password": new_password})
+            
             if resp:
-                return HttpResponse("✅ Password has been reset. You can now log in.")
+                return HttpResponse("✅ Password has been reset successfully. You can now log in with your new password.")
             else:
                 return render(request, "account/reset_password.html", {
-                    "error": "Failed to reset password. Try again.",
-                    "token": token
+                    "error": "Failed to reset password. Please try again.",
+                    "access_token": access_token,
+                    "refresh_token": refresh_token
                 })
+                
         except Exception as e:
             return render(request, "account/reset_password.html", {
-                "error": f"Error: {str(e)}",
-                "token": token
+                "error": f"Error resetting password: {str(e)}",
+                "access_token": access_token,
+                "refresh_token": refresh_token
             })
 
-    return render(request, "account/reset_password.html", {"token": token})
-
+    return render(request, "account/reset_password.html", {
+        "access_token": access_token,
+        "refresh_token": refresh_token
+    })
 
 
 class CheckUserVerified(APIView):
@@ -577,13 +602,13 @@ class LearnDataView(APIView):
             
             # Get user basic info - use execute() instead of single() to handle missing users
             user_response = supabase.table("users") \
-                .select("username") \
+                .select("display_name") \
                 .eq("id", str(user_id)) \
                 .limit(1) \
                 .execute()
 
             if user_response.data:
-                user_name = user_response.data
+                user_name = user_response.data[0].get("display_name", "User")
             else:
                 user_name = "User"
             print("User name:", user_name)
