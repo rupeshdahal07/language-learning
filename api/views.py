@@ -497,8 +497,9 @@ class ResetUserPassword(APIView):
                 {"message": "Password reset link sent to email if account exists."},
                 status=status.HTTP_200_OK
             )
-        
+
 def reset_password(request):
+    
     # Get tokens from URL parameters (sent by Supabase after email verification)
     access_token = request.GET.get("access_token", "")
     refresh_token = request.GET.get("refresh_token", "")
@@ -531,14 +532,10 @@ def reset_password(request):
 
         try:
             # Create a new supabase client with the recovery session
-            from supabase import create_client
-            import os
+            from app.supabase_client import supabase
             
             # Create client for this specific session
-            session_supabase = create_client(
-                os.environ.get("SUPABASE_URL"), 
-                os.environ.get("SUPABASE_ANON_KEY")
-            )
+            session_supabase = supabase
             
             # Set the session
             session_supabase.auth.set_session(access_token, refresh_token)
@@ -659,8 +656,24 @@ class LearnDataView(APIView):
                         vocab_lesson_count += 1
                 vocab_progress = min(vocab_lesson_count / vocab_total_count, 1.0)
 
-            # # Calculate tracing progress (based on letters with specific criteria)
-            tracing_progress = alphabet_progress  # Using same logic for now
+            # Calculate conversation progress (lesson_type == 1)
+            conv_total = supabase.table("lessons").select("id", count="exact").eq("lesson_type", 1).limit(0).execute()
+            conv_completed_response = supabase.table("user_lesson_progress") \
+                .select("*, lessons!inner(lesson_type)") \
+                .eq("user_id", user_id) \
+                .eq("lessons.lesson_type", 1) \
+                .execute()
+            
+            conv_progress = 0.0
+            conv_total_count = conv_total.count or 0
+            if conv_total_count > 0:
+                conv_lesson_count = 0
+                for lesson_progress in conv_completed_response.data or []:
+                    lesson_progress_value = lesson_progress.get("lesson_progress", 0) or 0
+                    if lesson_progress_value > 0:
+                        conv_lesson_count += 1
+                conv_progress = min(conv_lesson_count / conv_total_count, 1.0)
+
             
             response_data = {
                 "name": user_name,
@@ -668,7 +681,8 @@ class LearnDataView(APIView):
                 "path_progress": path_progress,
                 "alphabet_progress": round(alphabet_progress, 2),
                 "vocab_progress": round(vocab_progress, 2),
-                "tracing_progress": round(tracing_progress, 2)
+                "conversation_progress": round(conv_progress, 2),
+               
             }
             
             return Response(response_data, status=status.HTTP_200_OK)
