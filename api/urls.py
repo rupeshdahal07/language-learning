@@ -10,7 +10,7 @@ urlpatterns = [
     path('learn-data/', LearnDataView.as_view(), name='learn_data'),
 
     path('reset-password-link/', ResetUserPassword.as_view(), name='reset-password' ),
-    path("reset-password/", reset_password, name="reset_password"),
+    path("reset-password/", reset_password, name="reset_password-confirm"),
 
     path('is-verified/', CheckUserVerified.as_view(), name='is_verified')
 

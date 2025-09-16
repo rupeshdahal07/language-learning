@@ -461,30 +461,45 @@ class ResetUserPassword(APIView):
                     status=status.HTTP_400_BAD_REQUEST
                 )
 
-            # Send password reset email using Supabase
-            resp = supabase.auth.reset_password_email(
-                email,
-                options={"redirectTo": "http://13.229.98.72:8000/api/reset-password"}
-            )
-            # Supabase returns None if successful, error otherwise
-            if resp is not None and hasattr(resp, "message"):
+            # Validate email format (optional but recommended)
+            from django.core.validators import validate_email
+            from django.core.exceptions import ValidationError
+            
+            try:
+                validate_email(email)
+            except ValidationError:
                 return Response(
-                    {"error": getattr(resp, "message", "Failed to send reset email.")},
+                    {"error": "Please enter a valid email address."},
                     status=status.HTTP_400_BAD_REQUEST
                 )
 
+            # Send password reset email using Supabase
+            # Correct method name is reset_password_for_email()
+            resp = supabase.auth.reset_password_for_email(
+                email,
+                options={"redirect_to": "http://13.229.98.72:8000/api/reset-password/"}
+            )
+            
+            # The method typically returns None on success or raises an exception
             return Response(
-                {"message": "Password reset link sent to email."},
+                {"message": "Password reset link sent to email if account exists."},
                 status=status.HTTP_200_OK
             )
+            
         except Exception as e:
+            # Log the actual error for debugging
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Password reset error for email {email}: {str(e)}")
+            
+            # Return generic message for security (don't reveal if email exists)
             return Response(
-                {"error": f"Error sending reset email: {str(e)}"},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                {"message": "Password reset link sent to email if account exists."},
+                status=status.HTTP_200_OK
             )
         
 def reset_password(request):
-    token = request.GET.get("access_token", "")
+    token = request.GET.get("token", "")
     if request.method == "POST":
         new_password = request.POST.get("password")
         confirm_password = request.POST.get("confirm_password")
@@ -525,18 +540,17 @@ class CheckUserVerified(APIView):
             return Response({"error": "user_id is required"}, status=400)
 
         try:
-            # Use admin API to get user info from auth.users
-            resp = supabase.auth.admin.get_user_by_id(user_id)
+            # Query the public users table for is_verified field
+            resp = supabase.table("users").select("id, is_verified").eq("id", user_id).single().execute()
             
-            if not resp.user:
+            if not resp.data:
                 return Response({"error": "User not found"}, status=404)
 
-            user = resp.user
-            verified = user.email_confirmed_at is not None
+            user_data = resp.data
+            verified = user_data.get("is_verified", False)
 
             return Response({
-                "id": user.id,
-                "email": user.email,
+                "id": user_data["id"],
                 "verified": verified
             }, status=200)
 
