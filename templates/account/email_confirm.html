@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Email Confirmation</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 2em; }
+        .message { color: green; font-size: 1.2em; }
+        .error { color: red; font-size: 1.2em; }
+    </style>
+</head>
+<body>
+    <h2>Email Confirmation</h2>
+    {% if message %}
+        <div class="message">{{ message }}</div>
+    {% endif %}
+    {% if error %}
+        <div class="error">{{ error }}</div>
+    {% endif %}
+</body>
+</html>

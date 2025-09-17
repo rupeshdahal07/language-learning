@@ -2,11 +2,13 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework import status
-from .utils import get_user_supabase
+from .utils import get_user_supabase, get_user
 import json
 from .supabase_client import supabase
 from django.shortcuts import render
 from django.http import HttpResponse
+from django.core.mail import send_mail
+from django.conf import settings
 
 class UserPathProgressView(APIView):
     permission_classes = [IsAuthenticated]
@@ -413,6 +415,7 @@ class UserRegistration(APIView):
                 )
 
             user_id = resp.user.id
+            access_token = resp.session.access_token if resp.session else None
 
             # Handle avatar upload
             image_url = None
@@ -432,11 +435,27 @@ class UserRegistration(APIView):
                 "id": user_id,
                 "display_name": name,
                 "username": username,
-                "avatar_url": image_url
+                "avatar_url": image_url,
+                "is_verified": False
             }
             response = supabase.table("users").insert(user_data).execute()
 
-            return Response(response.data, status=status.HTTP_201_CREATED)
+             # Send verification email with Supabase access token
+            if access_token:
+                verification_link = f"{settings.FRONTEND_URL}/api/verify-email?token={access_token}"
+                print(verification_link)
+                send_mail(
+                    subject="Verify your account",
+                    message=f"Click the link to verify your account: {verification_link}",
+                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    recipient_list=[email],
+                    fail_silently=False,
+                )
+
+            return Response(
+                {"message": "User created. Verification email sent."},
+                status=status.HTTP_201_CREATED
+            )
 
         except Exception as e:
             return Response(
@@ -444,6 +463,36 @@ class UserRegistration(APIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
         
+class EmailConfirm(APIView):
+    def get(self, request):
+        token = request.GET.get("token")
+        try:
+            # Verify token with Supabase
+            user = supabase.auth.get_user(token)
+
+            if not user or not user.user:
+                return render(request, "account/email_confirm.html", {
+                    "error": "Invalid or expired token"
+                })
+            print(f'email confirm:{user.user.id}')
+            # Mark user as verified
+            data = {
+                "is_verified": True
+            }
+            result = supabase.table("users").update(data).eq("id", user.user.id).execute()
+            if not result.data:
+                return render(request, "account/email_confirm.html", {
+                    "error": "Failed to update verification status. Please try again."
+                })
+
+            return render(request, "account/email_confirm.html", {
+                "message": "Email verified successfully"
+            })
+        except Exception as e:
+            return render(request, "account/email_confirm.html", {
+                "error": str(e)
+            })
+
 
 class ResetUserPassword(APIView):
     permission_classes = [AllowAny]
@@ -693,31 +742,54 @@ class LearnDataView(APIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
         
-
+from supabase import create_client
+supabase_admin = create_client(settings.SUPABASE_URL, settings.SUPABASE_SERVICE_KEY)
 
 class ChangeEmail(APIView):
+    permission_classes = [IsAuthenticated]
+
     def post(self, request):
+        new_email = request.data.get("email", "").strip()
+        if not new_email:
+            return Response({"error": "Email is required"}, status=400)
+
+        auth_header = request.headers.get("Authorization", "")
+        access_token = auth_header.replace("Bearer ", "").strip()
+        if not access_token:
+            return Response({"error": "Authorization token missing"}, status=401)
+
         try:
-            new_email = request.data.get("email", "").strip()
-            access_token = request.headers.get("Authorization", "").replace("Bearer ", "")
+            # Get Supabase user ID from access token
+            supabase_user = get_user_supabase(access_token)
+            user_info = supabase_user.auth.get_user()
+            supabase_user_id = user_info.user.id
 
-            if not new_email:
-                return Response({"error": "Email is required"}, status=status.HTTP_400_BAD_REQUEST)
-
-            if not access_token:
-                return Response({"error": "Authorization token required"}, status=status.HTTP_401_UNAUTHORIZED)
-
-            resp = supabase.auth.update_user({"email": new_email}, access_token=access_token)
-
-            return Response(
-                {"message": "Verification email sent to new address."},
-                status=status.HTTP_200_OK
+            # Update email using admin API
+            supabase_admin.auth.admin.update_user(
+                id=supabase_user_id,
+                email=new_email
             )
 
-        except Exception as e:
-            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        
+            return Response({"message": "Verification email sent to new address"}, status=200)
 
+        except Exception as e:
+            return Response({"error": str(e)}, status=500)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+            
     # def put(self, request):
     #     """Update user's path progress"""
     #     try:

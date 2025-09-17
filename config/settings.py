@@ -150,3 +150,19 @@ SUPABASE_PROJECT = "<your-project-ref>"   # e.g. xyzcompanyabcd
 SUPABASE_URL = env('SUPABASE_URL')
 SUPABASE_ANON_KEY = env('SUPABASE_KEY')
 SUPABASE_JWT_SECRET = env('SUPABASE_JWT_SECRET')
+SUPABASE_SERVICE_KEY = env('SERVICE_ROLE_KEY')
+
+FRONTEND_URL = 'http://localhost:8000'
+
+
+ENABLE_EMAIL_SIGNUP = env.bool("ENABLE_EMAIL_SIGNUP", default=True)
+ENABLE_EMAIL_AUTOCONFIRM = env.bool("ENABLE_EMAIL_AUTOCONFIRM", default=True)
+ENABLE_ANONYMOUS_USERS = env.bool("ENABLE_ANONYMOUS_USERS", default=False)
+
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = env("SMTP_HOST", default="smtp.zeptomail.com")
+EMAIL_PORT = env.int("SMTP_PORT", default=587)
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = env("SMTP_USER", default="emailapikey")
+EMAIL_HOST_PASSWORD = env("SMTP_PASS", default="")
+DEFAULT_FROM_EMAIL = f"{env('SMTP_SENDER_NAME', default='Darkmatter')} <{env('SMTP_ADMIN_EMAIL', default='noreply@savya.com.np')}>"
