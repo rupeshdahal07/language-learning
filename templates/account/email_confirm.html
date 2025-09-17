@@ -3,19 +3,78 @@
 <head>
     <meta charset="UTF-8">
     <title>Email Confirmation</title>
-    <style>
-        body { font-family: Arial, sans-serif; margin: 2em; }
-        .message { color: green; font-size: 1.2em; }
-        .error { color: red; font-size: 1.2em; }
-    </style>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
-<body>
-    <h2>Email Confirmation</h2>
-    {% if message %}
-        <div class="message">{{ message }}</div>
-    {% endif %}
-    {% if error %}
-        <div class="error">{{ error }}</div>
-    {% endif %}
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen flex items-center justify-center p-4">
+    <div class="w-full max-w-md mx-auto bg-white rounded-xl shadow-lg p-8">
+        <!-- Header -->
+        <div class="text-center mb-6">
+            <h1 class="text-2xl md:text-3xl font-bold text-gray-800 mb-2">Email Confirmation</h1>
+        </div>
+
+        <!-- Success Message -->
+        {% if message %}
+            <div class="text-center mb-6">
+                <!-- Success Icon -->
+                <div class="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
+                    <svg class="w-8 h-8 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                </div>
+                <h2 class="text-xl font-semibold text-green-600 mb-2">Success!</h2>
+                <p class="text-green-700 text-lg">{{ message }}</p>
+                <p class="text-gray-600 text-sm mt-2">You can now close this window and return to the app.</p>
+            </div>
+            
+            <!-- Action Button -->
+            <div class="text-center">
+                <button onclick="window.close()" class="bg-green-500 hover:bg-green-600 text-white font-medium py-3 px-6 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2">
+                    Close Window
+                </button>
+            </div>
+        {% endif %}
+
+        <!-- Error Message -->
+        {% if error %}
+            <div class="text-center mb-6">
+                <!-- Error Icon -->
+                <div class="mx-auto w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-4">
+                    <svg class="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </div>
+                <h2 class="text-xl font-semibold text-red-600 mb-2">Verification Failed</h2>
+                {% comment %} <p class="text-red-700 text-lg">{{ error }}</p> {% endcomment %}
+                <p class="text-gray-600 text-sm mt-2">Please try again or contact support if the problem persists.</p>
+            </div>
+            
+            <!-- Action Button -->
+            <div class="text-center">
+                <button onclick="window.close()" class="bg-red-500 hover:bg-red-600 text-white font-medium py-3 px-6 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2">
+                    Close Window
+                </button>
+            </div>
+        {% endif %}
+
+        <!-- Footer -->
+        <div class="text-center mt-8 pt-6 border-t border-gray-200">
+            <p class="text-xs text-gray-500">
+                Darkmatter game production &copy; 2025
+            </p>
+        </div>
+    </div>
+
+    <script>
+        // Auto-close window after 5 seconds on success
+        {% if message %}
+            setTimeout(function() {
+                if (confirm("Close this window?")) {
+                    window.close();
+                }
+            }, 5000);
+        {% endif %}
+    </script>
 </body>
 </html>

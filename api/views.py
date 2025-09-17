@@ -780,10 +780,157 @@ class ChangeEmail(APIView):
 
 
 
+class UserProfile(APIView):
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        """Get user profile and progress data"""
+        try:
+            # Get user_id from query params for GET request
+            user_id = request.query_params.get("user_id")
+            
+            # Validate input
+            if not user_id:
+                return Response(
+                    {"error": "User ID is required"},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Validate user_id format (assuming UUID)
+            try:
+                import uuid
+                uuid.UUID(user_id)
+            except ValueError:
+                return Response(
+                    {"error": "Invalid user ID format"},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Get JWT token and create authenticated Supabase client
+            jwt_token = request.auth
+            if not jwt_token:
+                return Response(
+                    {"error": "Authentication token required"},
+                    status=status.HTTP_401_UNAUTHORIZED
+                )
+            
+            supabase_client = get_user_supabase(jwt_token)
+            
+            # Query user progress with error handling
+            response = supabase_client.table('user_progress')\
+                .select('*')\
+                .eq("user_id", user_id)\
+                .execute()
+            
+            # Check if user exists
+            if not response.data:
+                return Response(
+                    {"error": "User profile not found"},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+            
+            return Response(response.data,status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            # Log the error for debugging
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Error fetching user profile for user_id {user_id}: {str(e)}")
+            
+            return Response(
+                {"error": "Internal server error occurred"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 
+from datetime import datetime, timedelta, timezone
 
+class CheckStreak(APIView):
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        """Get user profile and progress data"""
+        try:
+            # Get user_id from query params for GET request
+            user_id = request.query_params.get("user_id")
+            
+            # Validate input
+            if not user_id:
+                return Response(
+                    {"error": "User ID is required"},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Validate user_id format (assuming UUID)
+            try:
+                import uuid
+                uuid.UUID(user_id)
+            except ValueError:
+                return Response(
+                    {"error": "Invalid user ID format"},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Get JWT token and create authenticated Supabase client
+            jwt_token = request.auth
+            if not jwt_token:
+                return Response(
+                    {"error": "Authentication token required"},
+                    status=status.HTTP_401_UNAUTHORIZED
+                )
+            
+            supabase_client = get_user_supabase(jwt_token)
+            # Query user progress with error handling
+            response = supabase_client.table('user_progress')\
+                .select('streak', 'streak_type', 'updated_at')\
+                .eq("user_id", user_id)\
+                .single()\
+                .execute()
+            data = response.data
+            updated_at = data.get('updated_at')
+            # Convert it to a datetime object
+            updated_at_dt = datetime.fromisoformat(updated_at.replace("Z", "+00:00"))
+            yesterday = (datetime.now(timezone.utc) - timedelta(days=1)).date()
 
+            updated_data = {}
+            if updated_at_dt.date() == yesterday:
+                updated_data = {
+                    'streak': data.get('streak', 0) + 1,
+                    'streak_type': 1  # increased
+                }
+            elif updated_at_dt.date() == datetime.now(timezone.utc).date():
+                updated_data = {
+                    'streak': data.get('streak', 0),
+                    'streak_type': 0  # unchanged
+                }
+            else:
+                updated_data = {
+                    'streak': max(data.get('streak', 0) - 1, 0),
+                    'streak_type': -1  # decreased
+                }
+            update = supabase_client.table('user_progress').update(updated_data).eq('user_id', user_id).execute()
+
+            
+
+            # Check if user exists
+            if not update.data:
+                return Response(
+                    {"error": "User profile not found"},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+            
+            return Response(response.data,status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            # Log the error for debugging
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Error fetching user profile for user_id {user_id}: {str(e)}")
+            
+            return Response(
+                {"error": "Internal server error occurred"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 
 

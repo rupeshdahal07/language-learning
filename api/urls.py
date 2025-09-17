@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import UserPathProgressView, UserLessonProgressView, UserLevelProgressView, UserRegistration, LearnDataView, ResetUserPassword, reset_password, CheckUserVerified, ChangeEmail, EmailConfirm
+from .views import UserPathProgressView, UserLessonProgressView, UserLevelProgressView, UserRegistration, LearnDataView, ResetUserPassword, reset_password, CheckUserVerified, ChangeEmail, EmailConfirm, UserProfile, CheckStreak
 
 urlpatterns = [
     # User Path Progress CRUD operations
@@ -16,6 +16,9 @@ urlpatterns = [
     path('is-verified/', CheckUserVerified.as_view(), name='is_verified'),
 
     path('verify-email/', EmailConfirm.as_view(), name='confirm-email'),
+
+    path('profile-data/', UserProfile.as_view(), name='profile_data'),
+    path('check-streak/', CheckStreak.as_view(), name='check-streak'),
 
 
 
