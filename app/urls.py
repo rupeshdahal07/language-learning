@@ -24,7 +24,8 @@ urlpatterns = [
     path('users/', views.users, name='users'),
     path('users/list/', views.list_users, name='list_users'),
 
-    path('create-lesson/', views.create_lesson, name='create_lesson'),
+    #path('create-lesson/', views.create_lesson, name='create_lesson'),
+    path('create-lesson-indivisual/', views.create_individual_lesson, name='create_individual_lesson'),
     path('create-lesson/list/', views.list_lessons, name='lesson_list'),
     path('delete_lesson/', views.delete_lesson, name='delete_lesson'),
     path('lessons/<int:lesson_id>/edit/', views.edit_lesson, name='edit_lesson'),

@@ -1,3 +1,4 @@
+<!-- filepath: d:\DarkMatter\LanguageLearning\templates\community\index.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -24,17 +25,13 @@
         }
       }
     </script>
-    
 </head>
-
 <body class="bg-brand-white min-h-screen">
     <!-- Header -->
     <div class="bg-brand-white px-4 py-3 flex items-center justify-center relative">
-        <!-- Back Arrow (left) -->
         <div class="absolute left-4 top-1/2 -translate-y-1/2 flex items-center">
             <i class="fas fa-arrow-left text-primary text-xl"></i>
         </div>
-        <!-- Centered Title -->
         <h1 class="text-gray-800 text-lg font-medium w-full text-center">Community</h1>
     </div>
 
@@ -42,7 +39,6 @@
     <div class="bg-brand-white border-b border-gray-200 shadow-lg px-4 py-3">
         <div class="flex items-center justify-between">
             <div class="flex items-center space-x-6">
-                
                 <div class="flex items-center space-x-4">
                     <div class="flex items-center space-x-2 bg-brand-btwhite rounded-xl px-4 py-2 h-10">
                         <i class="fas fa-plus text-gray-700"></i>
@@ -65,345 +61,116 @@
     </div>
 
     <!-- Main Content -->
-    <div class="max-w-2xl mx-auto p-4 space-y-4">
-        
+    <div class="max-w-2xl mx-auto p-4 space-y-4" id="post-container">
         <!-- Post Input -->
         <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-3">
             <div class="flex items-center space-x-3">
-                <img src="https://img.freepik.com/free-vector/blue-circle-with-white-user_78370-4707.jpg?semt=ais_incoming&w=740&q=80" 
+                <img src="{{ user.avatar_url|default:'https://img.freepik.com/free-vector/blue-circle-with-white-user_78370-4707.jpg?semt=ais_incoming&w=740&q=80' }}" 
                      alt="Profile" class="w-10 h-10 rounded-full">
-                <input type="text" placeholder="Post your question, thoughts" 
+                <input type="text" id="new-post-input" placeholder="Post your question, thoughts" 
                        class="flex-1 bg-gray-100 rounded-full px-4 py-2 text-gray-700 placeholder-gray-500">
+                <button id="post-btn" class="ml-2 px-4 py-2 bg-primary text-white rounded-lg font-semibold">Post</button>
             </div>
         </div>
 
-        <!-- Post 1 -->
-        <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-4">
-            <!-- Post Header -->
-            <div class="flex items-center space-x-3 mb-3">
-                <img src="https://img.freepik.com/free-vector/blue-circle-with-white-user_78370-4707.jpg?semt=ais_incoming&w=740&q=80" 
-                     alt="Priya Kunwar" class="w-10 h-10 rounded-full">
-                <div>
-                    <h3 class="font-semibold text-gray-800">Priya Kunwar</h3>
-                    <p class="text-gray-500 text-sm flex items-center">
-                        <i class="fas fa-clock mr-1 "></i>15 mins
-                    </p>
-                </div>
-            </div>
-
-            <!-- Post Content -->
-            <p class="text-gray-800 border-b border-brand-gray py-2 px-2 mb-3 text-lg">I completed my pathI journey today</p>
-
-            <!-- Interaction Buttons -->
-            <div class="flex items-center justify-center border-b border-brand-gray pb-3 space-x-6 mb-4">
-                <button class="flex items-center space-x-2 bg-brand-btwhite px-3 py-1 rounded-xl">
-                    <i class="fas fa-arrow-up"></i>
-                    <span class="font-medium">5</span>
-                </button>
-                <button class="flex items-center space-x-2 bg-brand-btwhite hover:bg-brand-hover px-3 py-1 rounded-xl">
-                    <i class="fas fa-arrow-down"></i>
-                    <span>0</span>
-                </button>
-                <button class="flex items-center space-x-2 bg-brand-btwhite  px-3 py-1 rounded-xl">
-                    <i class="fas fa-comment"></i>
-                    <span>2</span>
-                </button>
-                <button class="flex items-center space-x-2 bg-brand-btwhite  px-3 py-1 rounded-xl">
-                    <i class="fas fa-share"></i>
-                    <span>2</span>
-                </button>
-            </div>
-
-            <!-- Comments -->
-            <div class="space-y-3">
-                <!-- Comment 1 -->
-                <div class="flex items-start space-x-3">
-                    <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=32&h=32&fit=crop&crop=face" 
-                         alt="Kritika Pokhrel" class="w-6 h-6 rounded-full">
-                    <div>
-                        <div class="bg-gray-100 rounded-lg px-3 py-2">
-                            <p class="font-semibold text-sm text-gray-800">Kritika Pokhrel</p>
-                            <p class="text-gray-700 text-sm">Congratulations!!!</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Comment 2 -->
-                <div class="flex items-start space-x-3">
-                    <img src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=32&h=32&fit=crop&crop=face" 
-                         alt="Rajesh Hamal" class="w-6 h-6 rounded-full">
-                    <div>
-                        <div class="bg-gray-100 rounded-lg px-3 py-2">
-                            <p class="font-semibold text-sm text-gray-800">Rajesh Hamal</p>
-                            <p class="text-gray-700 text-sm">Well done Priya</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Comment Input -->
-                <div class="flex items-center space-x-3 mt-3">
-                    <img src="https://img.freepik.com/free-vector/blue-circle-with-white-user_78370-4707.jpg?semt=ais_incoming&w=740&q=80" 
-                         alt="You" class="w-8 h-8 rounded-full">
-                    <div class="flex-1 flex items-center bg-gray-100 rounded-2xl px-4 py-2">
-                        <input type="text" placeholder="Write a comment" 
-                               class="flex-1 bg-transparent text-gray-700 placeholder-gray-500 outline-none">
-                        <button class="text-primary ml-2">
-                            <i class="fas fa-paper-plane"></i>
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <!-- Post 1 -->
-        <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-4">
-            <!-- Post Header -->
-            <div class="flex items-center space-x-3 mb-3">
-                <img src="https://img.freepik.com/free-vector/blue-circle-with-white-user_78370-4707.jpg?semt=ais_incoming&w=740&q=80" 
-                     alt="Priya Kunwar" class="w-10 h-10 rounded-full">
-                <div>
-                    <h3 class="font-semibold text-gray-800">Priya Kunwar</h3>
-                    <p class="text-gray-500 text-sm flex items-center">
-                        <i class="fas fa-clock mr-1 "></i>15 mins
-                    </p>
-                </div>
-            </div>
-
-            <!-- Post Content -->
-            <p class="text-gray-800 border-b border-brand-gray py-2 px-2 mb-3 text-lg">I completed my pathI journey today</p>
-
-            <!-- Interaction Buttons -->
-            <div class="flex items-center justify-center border-b border-brand-gray pb-3 space-x-6 mb-4">
-                <button class="flex items-center space-x-2 bg-blue-100 text-blue-600 px-3 py-1 rounded-xl">
-                    <i class="fas fa-home"></i>
-                    <span class="font-medium">5</span>
-                </button>
-                <button class="flex items-center space-x-2 bg-brand-btwhite  px-3 py-1 rounded-xl">
-                    <i class="fas fa-heart"></i>
-                    <span>0</span>
-                </button>
-                <button class="flex items-center space-x-2 bg-brand-btwhite  px-3 py-1 rounded-xl">
-                    <i class="fas fa-comment"></i>
-                    <span>2</span>
-                </button>
-                <button class="flex items-center space-x-2 bg-brand-btwhite  px-3 py-1 rounded-xl">
-                    <i class="fas fa-share"></i>
-                    <span>2</span>
-                </button>
-            </div>
-
-            <!-- Comments -->
-            <div class="space-y-3">
-                <!-- Comment 1 -->
-                <div class="flex items-start space-x-3">
-                    <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=32&h=32&fit=crop&crop=face" 
-                         alt="Kritika Pokhrel" class="w-6 h-6 rounded-full">
-                    <div>
-                        <div class="bg-gray-100 rounded-lg px-3 py-2">
-                            <p class="font-semibold text-sm text-gray-800">Kritika Pokhrel</p>
-                            <p class="text-gray-700 text-sm">Congratulations!!!</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Comment 2 -->
-                <div class="flex items-start space-x-3">
-                    <img src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=32&h=32&fit=crop&crop=face" 
-                         alt="Rajesh Hamal" class="w-6 h-6 rounded-full">
-                    <div>
-                        <div class="bg-gray-100 rounded-lg px-3 py-2">
-                            <p class="font-semibold text-sm text-gray-800">Rajesh Hamal</p>
-                            <p class="text-gray-700 text-sm">Well done Priya</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Comment Input -->
-                <div class="flex items-center space-x-3 mt-3">
-                    <img src="https://img.freepik.com/free-vector/blue-circle-with-white-user_78370-4707.jpg?semt=ais_incoming&w=740&q=80" 
-                         alt="You" class="w-8 h-8 rounded-full">
-                    <div class="flex-1 flex items-center bg-gray-100 rounded-full px-4 py-2">
-                        <input type="text" placeholder="Write a comment" 
-                               class="flex-1 bg-transparent text-gray-700 placeholder-gray-500 outline-none">
-                        <button class="text-primary ml-2">
-                            <i class="fas fa-paper-plane"></i>
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <!-- Post 1 -->
-        <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-4">
-            <!-- Post Header -->
-            <div class="flex items-center space-x-3 mb-3">
-                <img src="https://img.freepik.com/free-vector/blue-circle-with-white-user_78370-4707.jpg?semt=ais_incoming&w=740&q=80" 
-                     alt="Priya Kunwar" class="w-10 h-10 rounded-full">
-                <div>
-                    <h3 class="font-semibold text-gray-800">Priya Kunwar</h3>
-                    <p class="text-gray-500 text-sm flex items-center">
-                        <i class="fas fa-clock mr-1 "></i>15 mins
-                    </p>
-                </div>
-            </div>
-
-            <!-- Post Content -->
-            <p class="text-gray-800 border-b border-brand-gray py-2 px-2 mb-3 text-lg">I completed my pathI journey today</p>
-
-            <!-- Interaction Buttons -->
-            <div class="flex items-center justify-center border-b border-brand-gray pb-3 space-x-6 mb-4">
-                <button class="flex items-center space-x-2 bg-blue-100 text-blue-600 px-3 py-1 rounded-xl">
-                    <i class="fas fa-home"></i>
-                    <span class="font-medium">5</span>
-                </button>
-                <button class="flex items-center space-x-2 bg-brand-btwhite  px-3 py-1 rounded-xl">
-                    <i class="fas fa-heart"></i>
-                    <span>0</span>
-                </button>
-                <button class="flex items-center space-x-2 bg-brand-btwhite  px-3 py-1 rounded-xl">
-                    <i class="fas fa-comment"></i>
-                    <span>2</span>
-                </button>
-                <button class="flex items-center space-x-2 bg-brand-btwhite  px-3 py-1 rounded-xl">
-                    <i class="fas fa-share"></i>
-                    <span>2</span>
-                </button>
-            </div>
-
-            <!-- Comments -->
-            <div class="space-y-3">
-                <!-- Comment 1 -->
-                <div class="flex items-start space-x-3">
-                    <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=32&h=32&fit=crop&crop=face" 
-                         alt="Kritika Pokhrel" class="w-6 h-6 rounded-full">
-                    <div>
-                        <div class="bg-gray-100 rounded-lg px-3 py-2">
-                            <p class="font-semibold text-sm text-gray-800">Kritika Pokhrel</p>
-                            <p class="text-gray-700 text-sm">Congratulations!!!</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Comment 2 -->
-                <div class="flex items-start space-x-3">
-                    <img src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=32&h=32&fit=crop&crop=face" 
-                         alt="Rajesh Hamal" class="w-6 h-6 rounded-full">
-                    <div>
-                        <div class="bg-gray-100 rounded-lg px-3 py-2">
-                            <p class="font-semibold text-sm text-gray-800">Rajesh Hamal</p>
-                            <p class="text-gray-700 text-sm">Well done Priya</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Comment Input -->
-                <div class="flex items-center space-x-3 mt-3">
-                    <img src="https://img.freepik.com/free-vector/blue-circle-with-white-user_78370-4707.jpg?semt=ais_incoming&w=740&q=80" 
-                         alt="You" class="w-8 h-8 rounded-full">
-                    <div class="flex-1 flex items-center bg-gray-100 rounded-full px-4 py-2">
-                        <input type="text" placeholder="Write a comment" 
-                               class="flex-1 bg-transparent text-gray-700 placeholder-gray-500 outline-none">
-                        <button class="text-primary ml-2">
-                            <i class="fas fa-paper-plane"></i>
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <!-- Post 1 -->
-        <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-4">
-            <!-- Post Header -->
-            <div class="flex items-center space-x-3 mb-3">
-                <img src="https://img.freepik.com/free-vector/blue-circle-with-white-user_78370-4707.jpg?semt=ais_incoming&w=740&q=80" 
-                     alt="Priya Kunwar" class="w-10 h-10 rounded-full">
-                <div>
-                    <h3 class="font-semibold text-gray-800">Priya Kunwar</h3>
-                    <p class="text-gray-500 text-sm flex items-center">
-                        <i class="fas fa-clock mr-1 "></i>15 mins
-                    </p>
-                </div>
-            </div>
-
-            <!-- Post Content -->
-            <p class="text-gray-800 border-b border-brand-gray py-2 px-2 mb-3 text-lg">I completed my pathI journey today</p>
-
-            <!-- Interaction Buttons -->
-            <div class="flex items-center justify-center border-b border-brand-gray pb-3 space-x-6 mb-4">
-                <button class="flex items-center space-x-2 bg-blue-100 text-blue-600 px-3 py-1 rounded-xl">
-                    <i class="fas fa-home"></i>
-                    <span class="font-medium">5</span>
-                </button>
-                <button class="flex items-center space-x-2 bg-brand-btwhite  px-3 py-1 rounded-xl">
-                    <i class="fas fa-heart"></i>
-                    <span>0</span>
-                </button>
-                <button class="flex items-center space-x-2 bg-brand-btwhite  px-3 py-1 rounded-xl">
-                    <i class="fas fa-comment"></i>
-                    <span>2</span>
-                </button>
-                <button class="flex items-center space-x-2 bg-brand-btwhite  px-3 py-1 rounded-xl">
-                    <i class="fas fa-share"></i>
-                    <span>2</span>
-                </button>
-            </div>
-
-            <!-- Comments -->
-            <div class="space-y-3">
-                <!-- Comment 1 -->
-                <div class="flex items-start space-x-3">
-                    <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=32&h=32&fit=crop&crop=face" 
-                         alt="Kritika Pokhrel" class="w-6 h-6 rounded-full">
-                    <div>
-                        <div class="bg-gray-100 rounded-lg px-3 py-2">
-                            <p class="font-semibold text-sm text-gray-800">Kritika Pokhrel</p>
-                            <p class="text-gray-700 text-sm">Congratulations!!!</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Comment 2 -->
-                <div class="flex items-start space-x-3">
-                    <img src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=32&h=32&fit=crop&crop=face" 
-                         alt="Rajesh Hamal" class="w-6 h-6 rounded-full">
-                    <div>
-                        <div class="bg-gray-100 rounded-lg px-3 py-2">
-                            <p class="font-semibold text-sm text-gray-800">Rajesh Hamal</p>
-                            <p class="text-gray-700 text-sm">Well done Priya</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Comment Input -->
-                <div class="flex items-center space-x-3 mt-3">
-                    <img src="https://img.freepik.com/free-vector/blue-circle-with-white-user_78370-4707.jpg?semt=ais_incoming&w=740&q=80" 
-                         alt="You" class="w-8 h-8 rounded-full">
-                    <div class="flex-1 flex items-center bg-gray-100 rounded-full px-4 py-2">
-                        <input type="text" placeholder="Write a comment" 
-                               class="flex-1 bg-transparent text-gray-700 placeholder-gray-500 outline-none">
-                        <button class="text-primary ml-2">
-                            <i class="fas fa-paper-plane"></i>
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
+        <!-- Posts will be loaded here -->
+        <div id="posts-list"></div>
+        <div id="loading" class="text-center py-4 text-brand-gray hidden">Loading...</div>
+        <div id="end-message" class="text-center py-4 text-brand-gray hidden">No more posts.</div>
     </div>
 
     <script>
-        // Add some interactivity
-        document.querySelectorAll('button').forEach(button => {
-            button.addEventListener('click', function(e) {
-                // Add click effects or functionality here
-                console.log('Button clicked:', this);
-            });
+        let page = 1;
+        const pageSize = 10;
+        let loading = false;
+        let hasMore = true;
+
+        function renderPost(post) {
+            return `
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-4 mb-4">
+                <div class="flex items-center space-x-3 mb-3">
+                    <img src="${post.users.avatar_url || 'https://img.freepik.com/free-vector/blue-circle-with-white-user_78370-4707.jpg?semt=ais_incoming&w=740&q=80'}" 
+                         alt="${post.users.display_name || 'User'}" class="w-10 h-10 rounded-full">
+                    <div>
+                        <h3 class="font-semibold text-gray-800">${post.users.display_name || 'Anonymous'}</h3>
+                        <p class="text-gray-500 text-sm flex items-center">
+                            <i class="fas fa-clock mr-1"></i>${post.created_at ? new Date(post.created_at).toLocaleString() : ''}
+                        </p>
+                    </div>
+                </div>
+                <p class="text-gray-800 border-b border-brand-gray py-2 px-2 mb-3 text-lg">${post.content || ''}</p>
+                <div class="flex items-center justify-center border-b border-brand-gray pb-3 space-x-6 mb-4">
+                    <button class="flex items-center space-x-2 bg-brand-btwhite px-3 py-1 rounded-xl">
+                        <i class="fas fa-arrow-up"></i>
+                        <span class="font-medium">${post.upvotes || 0}</span>
+                    </button>
+                    <button class="flex items-center space-x-2 bg-brand-btwhite hover:bg-brand-hover px-3 py-1 rounded-xl">
+                        <i class="fas fa-arrow-down"></i>
+                        <span>${post.downvotes || 0}</span>
+                    </button>
+                    <button class="flex items-center space-x-2 bg-brand-btwhite px-3 py-1 rounded-xl">
+                        <i class="fas fa-comment"></i>
+                        <span>${post.comments_count || 0}</span>
+                    </button>
+                    <button class="flex items-center space-x-2 bg-brand-btwhite px-3 py-1 rounded-xl">
+                        <i class="fas fa-share"></i>
+                        <span>Share</span>
+                    </button>
+                </div>
+            </div>
+            `;
+        }
+
+        function loadPosts() {
+            if (loading || !hasMore) return;
+            loading = true;
+            document.getElementById('loading').classList.remove('hidden');
+            fetch(`/community/post?page=${page}&page_size=${pageSize}`)
+                .then(res => res.json())
+                .then(data => {
+                    document.getElementById('loading').classList.add('hidden');
+                    if (data.success) {
+                        const postsList = document.getElementById('posts-list');
+                        data.posts.forEach(post => {
+                            postsList.insertAdjacentHTML('beforeend', renderPost(post));
+                        });
+                        hasMore = data.has_more;
+                        if (!hasMore) {
+                            document.getElementById('end-message').classList.remove('hidden');
+                        }
+                        page += 1;
+                    } else {
+                        alert(data.error || "Failed to load posts.");
+                    }
+                    loading = false;
+                })
+                .catch(() => {
+                    document.getElementById('loading').classList.add('hidden');
+                    alert("Error loading posts.");
+                    loading = false;
+                });
+        }
+
+        // Infinite scroll
+        window.addEventListener('scroll', () => {
+            if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 200) {
+                loadPosts();
+            }
         });
 
-        // Handle comment input
-        document.querySelectorAll('input[placeholder="Write a comment"]').forEach(input => {
-            input.addEventListener('keypress', function(e) {
-                if (e.key === 'Enter' && this.value.trim()) {
-                    console.log('Comment:', this.value);
-                    this.value = '';
-                }
-            });
+        // Initial load
+        document.addEventListener('DOMContentLoaded', () => {
+            loadPosts();
+        });
+
+        // Post creation (dummy, needs backend POST endpoint)
+        document.getElementById('post-btn').addEventListener('click', function() {
+            const input = document.getElementById('new-post-input');
+            const content = input.value.trim();
+            if (!content) return;
+            // TODO: Implement actual POST request to backend
+            alert('Post creation is not implemented in frontend yet.');
+            input.value = '';
         });
     </script>
 </body>

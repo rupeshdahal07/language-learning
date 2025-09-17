@@ -159,8 +159,8 @@ def create_path(request):
 
             # Step 2: Create 5 lessons and collect their IDs
             lesson_ids = []
-            lesson_name = ['Alphabets', 'Vocabs', 'Kanji', 'Conversations', 'Grammar']
-            lesson_type = [2, 4, 16, 1, 8]
+            lesson_name = ['Alphabets', 'Vocabs', 'Kanji', 'Conversations', 'Grammar', 'Embassy_Kanji_Meanings', 'Embassy_Special_Meanings', 'Embassy_Sample_Questions']
+            lesson_type = [2, 4, 16, 1, 8, 32, 64, 128]
             for i in range(0, 5):
                 lesson_data = {
                     "path_id": path_id,
@@ -323,62 +323,98 @@ def get_level_type_name(level_type):
 
 
 #--------------------Lession-------------------------------------------->>>
-def create_lesson(request):
+def create_individual_lesson(request):
+    """
+    Allow users to create a lesson not tied to any path (path_id=None).
+    """
     if request.method == 'POST':
         lesson_title = request.POST.get('lessonTitle')
         lesson_description = request.POST.get('lessonDescription', '')
         image_file = request.FILES.get('image')
         lesson_type = request.POST.getlist('lessonCategory')
-
         lesson_type = sum(int(val) for val in lesson_type)
 
-         # ------uploading the image to supabase bucket
+        # Handle image upload
         image_url = None
         if image_file:
-            # return render(request, 'word_form.html', {'error': 'All fields are required.'})
-
-            # 1. Upload image file to Supabase Storage
-            file_name = f"images/{image_file.name}"  # folder 'image/' inside bucket
+            file_name = f"images/{image_file.name}"
             try:
-                res = supabase.storage.from_("images").upload(file_name, image_file.read())
+                supabase.storage.from_("images").upload(file_name, image_file.read())
+                image_url = f"/storage/v1/object/public/images/{file_name}"
             except Exception as e:
-                return render(request, 'word_form.html', {'error': f'Upload failed: {str(e)}'})
+                return render(request, 'lesson_form_indivisual.html', {'error': f'Image upload failed: {str(e)}'})
 
-            # # 2. Build public URL (no signed URL needed)
-            image_url = f"/storage/v1/object/public/images/{file_name}"
-
-        # Collect all level configurations
-        levels = []
-        index = 0
-        while True:
-            level_type = request.POST.get(f'level_type_{index}')
-            level_id = request.POST.get(f'level_id_{index}')
-            sub_level_id = request.POST.get(f'sub_level_id_{index}')
-            if level_type is None or level_id is None :
-                break
-            levels.append({
-            'level_type': int(level_type),
-            'level_id': int(level_id),
-            'sub_level_id': int(sub_level_id)
-            })
-            index += 1
-
-        # Prepare lesson data as JSON
-        lesson_data = [{
-        'lesson_title': lesson_title,
-        'lesson_description': lesson_description,
-        'data': levels,
-        'lesson_type': lesson_type,
-        'image_url': image_url
-            }]
-    # Insert as JSONB (not as a string)
-        supabase.table("lessons").insert(lesson_data).execute()
         
-        print('Lesson JSON:', lesson_data)
 
-        return redirect('create_lesson')  # Redirect after POST
+        # Prepare lesson data
+        lesson_data = [{
+            
+            'lesson_title': lesson_title,
+            'lesson_description': lesson_description,
+            'lesson_type': lesson_type,
+            'image_url': image_url
+        }]
+        supabase.table("lessons").insert(lesson_data).execute()
+        return render(request, 'lesson_form_indivisual.html', {'success': 'Lesson created successfully.'})
 
-    return render(request, 'lesson_form.html')
+    return render(request, 'lesson_form_indivisual.html')
+
+# def create_lesson(request):
+#     if request.method == 'POST':
+#         lesson_title = request.POST.get('lessonTitle')
+#         lesson_description = request.POST.get('lessonDescription', '')
+#         image_file = request.FILES.get('image')
+#         lesson_type = request.POST.getlist('lessonCategory')
+
+#         lesson_type = sum(int(val) for val in lesson_type)
+
+#          # ------uploading the image to supabase bucket
+#         image_url = None
+#         if image_file:
+#             # return render(request, 'word_form.html', {'error': 'All fields are required.'})
+
+#             # 1. Upload image file to Supabase Storage
+#             file_name = f"images/{image_file.name}"  # folder 'image/' inside bucket
+#             try:
+#                 res = supabase.storage.from_("images").upload(file_name, image_file.read())
+#             except Exception as e:
+#                 return render(request, 'word_form.html', {'error': f'Upload failed: {str(e)}'})
+
+#             # # 2. Build public URL (no signed URL needed)
+#             image_url = f"/storage/v1/object/public/images/{file_name}"
+
+#         # Collect all level configurations
+#         levels = []
+#         index = 0
+#         while True:
+#             level_type = request.POST.get(f'level_type_{index}')
+#             level_id = request.POST.get(f'level_id_{index}')
+#             sub_level_id = request.POST.get(f'sub_level_id_{index}')
+#             if level_type is None or level_id is None :
+#                 break
+#             levels.append({
+#             'level_type': int(level_type),
+#             'level_id': int(level_id),
+#             'sub_level_id': int(sub_level_id)
+#             })
+#             index += 1
+
+#         # Prepare lesson data as JSON
+#         lesson_data = [{
+#         'lesson_title': lesson_title,
+#         'lesson_description': lesson_description,
+#         'data': levels,
+#         'lesson_type': lesson_type,
+#         'image_url': image_url
+#             }]
+#     # Insert as JSONB (not as a string)
+#         supabase.table("lessons").insert(lesson_data).execute()
+        
+#         print('Lesson JSON:', lesson_data)
+
+#         return redirect('create_lesson')  # Redirect after POST
+
+#     return render(request, 'lesson_form.html')
 
 def get_level_ids(request):
     lesson_type = request.GET.get('type')

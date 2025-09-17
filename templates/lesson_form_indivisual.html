@@ -1,0 +1,54 @@
+<!-- filepath: d:\DarkMatter\LanguageLearning\templates\lesson_form_indivisual.html -->
+{% extends "base.html" %}
+{% block content %}
+<div class="max-w-lg mx-auto bg-white shadow-lg rounded-lg p-8 mt-8">
+    <h2 class="text-2xl font-bold mb-6 text-center text-gray-800">Create Individual Lesson</h2>
+    {% if error %}
+        <div class="bg-red-100 text-red-700 px-4 py-2 rounded mb-4 text-center">
+            {{ error }}
+        </div>
+    {% endif %}
+    {% if success %}
+        <div class="bg-green-100 text-green-700 px-4 py-2 rounded mb-4 text-center">
+            {{ success }}
+        </div>
+    {% endif %}
+    <form method="post" enctype="multipart/form-data" class="space-y-6">
+        {% csrf_token %}
+        <div>
+            <label for="lessonTitle" class="block text-gray-700 font-semibold mb-2">Lesson Title</label>
+            <input type="text" name="lessonTitle" id="lessonTitle" required
+                class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
+        </div>
+        <div>
+            <label for="lessonDescription" class="block text-gray-700 font-semibold mb-2">Lesson Description</label>
+            <textarea name="lessonDescription" id="lessonDescription" rows="3"
+                class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+        </div>
+        <div>
+            <label for="image" class="block text-gray-700 font-semibold mb-2">Lesson Image (optional)</label>
+            <input type="file" name="image" id="image"
+                class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
+        </div>
+        <div>
+            <label for="lessonCategory" class="block text-gray-700 font-semibold mb-2">Lesson Category</label>
+            <select name="lessonCategory" id="lessonCategory" required
+                class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <option value="" disabled selected>Select a category</option>
+                <option value="2">Alphabets</option>
+                <option value="4">Vocabs</option>
+                <option value="16">Kanji</option>
+                <option value="1">Conversations</option>
+                <option value="8">Grammar</option>
+                <option value="32">Embassy Kanji Meanings</option>
+                <option value="64">Embassy Special Meanings</option>
+                <option value="128">Embassy Sample Questions</option>
+            </select>
+        </div>
+        <button type="submit"
+            class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition font-semibold">
+            Create Lesson
+        </button>
+    </form>
+</div>
+{% endblock %}

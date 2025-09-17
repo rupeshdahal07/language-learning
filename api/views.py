@@ -99,7 +99,7 @@ class UserPathProgressView(APIView):
                 # Update existing progress
                 update_data = {
                     "status": status_value,
-                    "path_progress": progress_percentage,
+                    "path_progress": request.data.get('path_progress'),#progress_percentage,
                     "completed_lessons": completed_lessons
                 }
                 response = supabase.table("user_path_progress").update(update_data).eq("user_id", user_id).eq("path_id", path_id).execute()
@@ -110,7 +110,7 @@ class UserPathProgressView(APIView):
                     "user_id": user_id,
                     "path_id": path_id,
                     "status": status_value,
-                    "path_progress": progress_percentage,
+                    "path_progress": request.data.get('path_progress'), # progress_percentage,
                     "completed_lessons": completed_lessons
                 }
                 response = supabase.table("user_path_progress").insert(progress_data).execute()
@@ -692,6 +692,31 @@ class LearnDataView(APIView):
                 {"error": f"Error fetching learning data: {str(e)}"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+        
+
+
+class ChangeEmail(APIView):
+    def post(self, request):
+        try:
+            new_email = request.data.get("email", "").strip()
+            access_token = request.headers.get("Authorization", "").replace("Bearer ", "")
+
+            if not new_email:
+                return Response({"error": "Email is required"}, status=status.HTTP_400_BAD_REQUEST)
+
+            if not access_token:
+                return Response({"error": "Authorization token required"}, status=status.HTTP_401_UNAUTHORIZED)
+
+            resp = supabase.auth.update_user({"email": new_email}, access_token=access_token)
+
+            return Response(
+                {"message": "Verification email sent to new address."},
+                status=status.HTTP_200_OK
+            )
+
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
 
     # def put(self, request):
     #     """Update user's path progress"""
