@@ -29,7 +29,7 @@ SECRET_KEY = 'django-insecure-7pub*3@dcj!0mn#7@a)sn=u72^l5vv%-a+2zh2f_54ou8z723-
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config("DEBUG", default=False, cast=bool)
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -152,7 +152,7 @@ SUPABASE_ANON_KEY = env('SUPABASE_KEY')
 SUPABASE_JWT_SECRET = env('SUPABASE_JWT_SECRET')
 SUPABASE_SERVICE_KEY = env('SERVICE_ROLE_KEY')
 
-FRONTEND_URL = 'http://localhost:8000'
+FRONTEND_URL = 'http://13.229.98.72:8000'
 
 
 ENABLE_EMAIL_SIGNUP = env.bool("ENABLE_EMAIL_SIGNUP", default=True)

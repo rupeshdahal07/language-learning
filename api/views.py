@@ -439,6 +439,8 @@ class UserRegistration(APIView):
                 "is_verified": False
             }
             response = supabase.table("users").insert(user_data).execute()
+            supabase.table('user_progress').insert({"user_id": user_id}).execute()
+
 
              # Send verification email with Supabase access token
             if access_token:
