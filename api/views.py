@@ -747,38 +747,62 @@ class LearnDataView(APIView):
 from supabase import create_client
 supabase_admin = create_client(settings.SUPABASE_URL, settings.SUPABASE_SERVICE_KEY)
 
+# class ChangeEmail(APIView):
+#     permission_classes = [IsAuthenticated]
+
+#     def post(self, request):
+#         new_email = request.data.get("email", "").strip()
+#         if not new_email:
+#             return Response({"error": "Email is required"}, status=400)
+
+#         auth_header = request.headers.get("Authorization", "")
+#         access_token = auth_header.replace("Bearer ", "").strip()
+#         if not access_token:
+#             return Response({"error": "Authorization token missing"}, status=401)
+
+#         try:
+#             # Get Supabase user ID from access token
+#             supabase_user = get_user_supabase(access_token)
+#             user_info = supabase_user.auth.get_user()
+#             supabase_user_id = user_info.user.id
+
+#             # Update email using admin API
+#             supabase_admin.auth.admin.update_user(
+#                 id=supabase_user_id,
+#                 email=new_email
+#             )
+
+#             return Response({"message": "Verification email sent to new address"}, status=200)
+
+#         except Exception as e:
+#             return Response({"error": str(e)}, status=500)
+
+import os
+from config.env import env, BASE_DIR
+env.read_env(os.path.join(BASE_DIR, '.env'))
+import requests
+SUPABASE_URL = "http://139.59.72.199:8000"
+ANON_KEY = env('SUPABASE_KEY')
+
 class ChangeEmail(APIView):
-    permission_classes = [IsAuthenticated]
-
     def post(self, request):
-        new_email = request.data.get("email", "").strip()
-        if not new_email:
-            return Response({"error": "Email is required"}, status=400)
+        new_email = request.data.get("email")
+        access_token = request.headers.get("Authorization", "").replace("Bearer ", "")
 
-        auth_header = request.headers.get("Authorization", "")
-        access_token = auth_header.replace("Bearer ", "").strip()
-        if not access_token:
-            return Response({"error": "Authorization token missing"}, status=401)
+        if not new_email or not access_token:
+            return Response({"error": "Email and access token required"}, status=400)
 
-        try:
-            # Get Supabase user ID from access token
-            supabase_user = get_user_supabase(access_token)
-            user_info = supabase_user.auth.get_user()
-            supabase_user_id = user_info.user.id
+        url = f"{SUPABASE_URL}/auth/v1/user?redirect_to=http://13.229.98.72:8000/api/reset-password/"
+        headers = {
+            "Authorization": f"Bearer {access_token}",
+            "apikey": ANON_KEY,
+            "Content-Type": "application/json",
+        }
+        data = {"email": new_email}
 
-            # Update email using admin API
-            supabase_admin.auth.admin.update_user(
-                id=supabase_user_id,
-                email=new_email
-            )
-
-            return Response({"message": "Verification email sent to new address"}, status=200)
-
-        except Exception as e:
-            return Response({"error": str(e)}, status=500)
-
-
-
+        res = requests.put(url, headers=headers, json=data)
+        return Response(res.json(), status=res.status_code)
+    
 
 class UserProfile(APIView):
     permission_classes = [IsAuthenticated]
@@ -908,6 +932,8 @@ class CheckStreak(APIView):
                     'streak': max(data.get('streak', 0) - 1, 0),
                     'streak_type': -1  # decreased
                 }
+            
+            updated_data['updated_at'] = datetime.now(timezone.utc).isoformat()
             update = supabase_client.table('user_progress').update(updated_data).eq('user_id', user_id).execute()
 
             

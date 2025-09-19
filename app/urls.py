@@ -64,5 +64,7 @@ urlpatterns = [
     path('list-combined-word/', views.list_combined_words, name="list_combined_words"),
     path('edit-combined-word/<int:combined_words_id>/', views.edit_combined_words, name="edit_combined_words"),
 
+    path('create-sentence-level', views.create_sentence_level, name='create_sentence_level')
+
 
 ]

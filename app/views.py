@@ -678,6 +678,8 @@ def create_fill_blank(request):
         image_file = request.FILES.get('image')
         path_id = request.POST.get('path_id')
         lesson_id = request.POST.get('lesson_id')
+        title = request.POST.get('titleText')
+        
 
         options = []
         option_index = 0
@@ -754,7 +756,7 @@ def create_fill_blank(request):
                     
                 },
                 "imageUrl": image_url,
-                "title": question_text
+                "title": title
             }
         ]
         print(fill_blank)
@@ -805,20 +807,25 @@ def create_word_from_level(request):
 
     if request.method == 'POST':
         audio_file = request.FILES.get('audioFile')
-        nepali_sound = request.POST.get('sound')
+        image_file = request.FILES.get('imageFile')
+        meaning = request.POST.get('sound')
         path_id = request.POST.get('path_id')
         lesson_id = request.POST.get('lesson_id')
+        romaji = request.POST.get('romaji')
 
-        if nepali_sound:
-            nepali_sound = f'<font="Preeti font SDF">{nepali_sound}</font>'
+        if meaning:
+            meaning = re.sub(r"<(.*?)>", r'<font="Preeti font  SDF">\1</font>', meaning)
 
-        letter_1 = request.POST.get('letter_1')
-        letter_2 = request.POST.get('letter_2')
+        
         answer = []
-        if letter_1 and letter_2:
-            answer = [letter_1, letter_2]
-        elif letter_1:
-            answer = [letter_1]
+        count = 1
+        while True:
+            letter = request.POST.get(f'letter_{count}')
+            if letter is None:
+                break
+            answer.append(letter)
+            count += 1
+        
 
         # Collect all options dynamically
         options = []
@@ -831,7 +838,7 @@ def create_word_from_level(request):
             option_index += 1
 
         # Validation
-        if not audio_file or not answer or not options:
+        if  not answer or not options:
             return render(request, 'word_form.html', {'error': 'All fields are required.'})
 
         # # 1. Upload audio file to Supabase Storage
@@ -848,22 +855,39 @@ def create_word_from_level(request):
 
 
         # 1. Upload audio file to Supabase Storage
-        file_name = f"audio/{audio_file.name}"  # folder 'audio/' inside bucket
-        try:
-            res = supabase.storage.from_("audio").upload(file_name, audio_file.read())
-        except Exception as e:
-            return render(request, 'word_form.html', {'error': f'Upload failed: {str(e)}'})
+        audio_url = ''
+        if audio_file:
+            file_name = f"audio/{audio_file.name}"  # folder 'audio/' inside bucket
+            try:
+                res = supabase.storage.from_("audio").upload(file_name, audio_file.read())
+            except Exception as e:
+                return render(request, 'word_form.html', {'error': f'Upload failed: {str(e)}'})
 
-        # 2. Build public URL (no signed URL needed)
-        audio_url = f"/storage/v1/object/public/audio/{file_name}"
+            # 2. Build public URL (no signed URL needed)
+            audio_url = f"/storage/v1/object/public/audio/{file_name}"
 
+        image_url = None
+        if image_file:
+            # return render(request, 'word_form.html', {'error': 'All fields are required.'})
+
+            # 1. Upload image file to Supabase Storage
+            file_name = f"images/{image_file.name}"  # folder 'image/' inside bucket
+            try:
+                res = supabase.storage.from_("images").upload(file_name, image_file.read())
+            except Exception as e:
+                return render(request, 'word_form.html', {'error': f'Upload failed: {str(e)}'})
+
+            # # 2. Build public URL (no signed URL needed)
+            image_url = f"/storage/v1/object/public/images/{file_name}"
 
         # 3. Insert into DB
         word_data = [{
             "audioUrl": audio_url,
+            "imageUrl": image_url,
             "answer": answer,
             "options": options,
-            "sound": nepali_sound
+            "sound": meaning,
+            "romaji": romaji
         }]
         result = supabase.table("word_form_levels").insert(word_data).execute()
         ServiceLesson(result, 4, lesson_id )
@@ -1078,6 +1102,7 @@ def create_letters(request):
         japanese_letter = request.POST.get('japanese_letter')
         letter_collection = request.POST.get('japanese_character_type')
         audio_file = request.FILES.get('audio')
+        title = request.FILES.get('title')
 
         onyomi = request.POST.get('onyomi')
         kunyomi = request.POST.get('kunyomi')
@@ -1107,6 +1132,7 @@ def create_letters(request):
             'japanese_text': japanese_letter,
             'letter_info': {'onyomi': onyomi, 'kunyomi': kunyomi},
             'audio': audio_url,
+            'title': title
         }]
         print(data)
         result = supabase.table('letters').insert(data).execute()
@@ -1294,7 +1320,8 @@ def information_level2(request):
         path_ids.append({'id': row['id'], 'title': title})
 
     if request.method == 'POST':
-        title = request.POST.get('letterTitle')
+        title = request.POST.get('title')
+        question = request.POST.get('letterTitle')
         meaning = request.POST.get('letterMeaning')
         if meaning:
             meaning = re.sub(r"<(.*?)>", r'<font="Preeti font  SDF">\1</font>', meaning)
@@ -1335,7 +1362,7 @@ def information_level2(request):
 
         data = [{
             "letter_info": {
-                "title": title,
+                "title": question,
                 "romaji": romaji,
                 "meaning": meaning,
                 "nepali_meaning": nepali_meaning
@@ -1425,16 +1452,16 @@ def create_rearrange(request):
             answer_nepali = f'<font="Preeti font  SDF">{answer_nepali}</font>'
         
         # Collect romaji question words
-        romaji_words = []
-        romaji_index = 0
-        while True:
-            word = request.POST.get(f'romaji_word_{romaji_index}')
-            if word is None:
-                break
-            if word.strip():
-                romaji_words.append(word.strip())
-            romaji_index += 1
-        random.shuffle(romaji_words)
+        # romaji_words = []
+        # romaji_index = 0
+        # while True:
+        #     word = request.POST.get(f'romaji_word_{romaji_index}')
+        #     if word is None:
+        #         break
+        #     if word.strip():
+        #         romaji_words.append(word.strip())
+        #     romaji_index += 1
+        # random.shuffle(romaji_words)
         
         # Collect Japanese question words
         japanese_words = []
@@ -2002,6 +2029,7 @@ def create_combined_words(request):
         title = request.POST.get('title')
         letter_info_title = request.POST.get('letter_info_title')
         letter_info_meaning = request.POST.get('letter_info_meaning')
+        letter_info_meaning = re.sub(r"<(.*?)>", r'<font="Preeti font  SDF">\1</font>', letter_info_meaning())
         
         # Collect individual letters/words dynamically
         nepali_letters = []
@@ -2041,7 +2069,9 @@ def create_combined_words(request):
             if use_case is None:
                 break
             if use_case.strip():
-                use_cases.append(use_case.strip())
+                # Wrap text inside < > with Preeti font
+                formatted = re.sub(r"<(.*?)>", r'<font="Preeti font  SDF">\1</font>', use_case.strip())
+                use_cases.append(formatted)
             usecase_count += 1
 
         path_id = request.POST.get('path_id')
@@ -2092,7 +2122,7 @@ def create_combined_words(request):
             },
             "use_cases": use_cases,
             "image_url": image_url,
-            "title": title,
+            "title": letter_info_title,
             "meaning": {
                 "romaji": romaji,
                 "english": english,
@@ -2253,3 +2283,104 @@ def edit_combined_words(request, combined_words_id):
         
     except Exception as e:
         return render(request, 'combined_words.html', {'error': f'Combined words not found: {str(e)}'})
+
+
+def create_sentence_level(request):
+    paths = supabase.table('paths').select("id, title").execute()
+    lessons = supabase.table('lessons').select("id, lesson_title").execute()
+    
+    lesson_ids = []
+    for row in lessons.data:
+        title = row.get('lesson_title', str(row['id']))
+        lesson_ids.append({'id': row['id'], 'title': title})
+
+    path_ids = []
+    for row in paths.data:
+        title = row.get('title', str(row['id']))
+        path_ids.append({'id': row['id'], 'title': title})
+
+    if request.method == 'POST':
+        title = request.POST.get('title')
+        grammar_point = request.POST.get('grammar_point')
+        example_for = request.POST.get('example_for')
+        form = request.POST.get('form_0')
+        # forms = []
+        # option_count = 0
+        # while True:
+        #     option = request.POST.get(f'form_{option_count}')
+        #     if option is None:
+        #         break
+        #     forms.append(option)
+        #     option_count += 1
+        sentence_japanese = request.POST.get('sentence_japanese')
+        sentence_romaji = request.POST.get('sentence_romaji')
+        sentence_english = request.POST.get('sentence_english')
+        sentence_nepali = request.POST.get('sentence_nepali')
+        image_text = request.POST.get('image_text')
+        image_file = request.FILES.get('image_file')
+        audio_file = request.FILES.get('audio_file')
+        path_id = request.POST.get('path_id')
+        lesson_id = request.POST.get('lesson_id')
+
+        image_url = None
+        if image_file:
+            file_name = f"images/{image_file.name}"
+            try:
+                supabase.storage.from_("images").upload(file_name, image_file.read())
+                image_url = f"/storage/v1/object/public/images/{file_name}"
+            except Exception as e:
+                return render(request, 'sentence_level.html', {
+                    'error': f'Image upload failed: {str(e)}',
+                    'path_ids': path_ids,
+                    'lesson_ids': lesson_ids
+                })
+
+        audio_url = None
+        if audio_file:
+            file_name = f"audio/{audio_file.name}"
+            try:
+                supabase.storage.from_("audio").upload(file_name, audio_file.read())
+                audio_url = f"/storage/v1/object/public/audio/{file_name}"
+            except Exception as e:
+                return render(request, 'sentence_level.html', {
+                    'error': f'Audio upload failed: {str(e)}',
+                    'path_ids': path_ids,
+                    'lesson_ids': lesson_ids
+                })
+
+        # Prepare data for insertion
+        sentence_data = [{
+            "data": {
+                "title": title,
+                "forms": form,
+                "grammar_point": grammar_point,
+                "example_for": example_for,
+                "sentence_japanese": sentence_japanese,
+                "sentence_romaji": sentence_romaji,
+                "sentence_english": sentence_english,
+                "sentence_nepali": sentence_nepali,
+                "image_text": image_text
+            },
+            "image_url": image_url,
+            "audio_url": audio_url
+        }]
+        print(sentence_data)
+
+        # Insert into Supabase
+        try:
+            result = supabase.table("sentence_level").insert(sentence_data).execute()
+            # # Optionally, add to lesson's data array
+            #ServiceLesson(result, 12, lesson_id)
+            return render(request, 'sentence_level.html', {
+                'success': 'Sentence created successfully.',
+                'path_ids': path_ids,
+                'lesson_ids': lesson_ids
+            })
+        except Exception as e:
+            return render(request, 'sentence_level.html', {
+                'error': f'Failed to save sentence: {str(e)}',
+                'path_ids': path_ids,
+                'lesson_ids': lesson_ids
+            })
+
+    return render(request, 'sentence_level.html', {'path_ids': path_ids, 'lesson_ids': lesson_ids})

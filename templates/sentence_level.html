@@ -1,0 +1,178 @@
+
+{% extends "base.html" %}
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="max-w-3xl mx-auto bg-white/90 backdrop-blur-sm rounded-3xl shadow-2xl p-8">
+        <h1 class="text-3xl font-bold text-center bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-8">
+            Create - Sentence Level Form
+        </h1>
+        <!-- Error/Success Messages -->
+        {% if error %}
+            <div class="bg-red-100 border border-red-400 text-red-700 px-6 py-4 rounded-xl mb-6 shadow-lg">
+                <div class="flex items-center">
+                    <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                    </svg>
+                    {{ error }}
+                </div>
+            </div>
+        {% endif %}
+        
+        {% if success %}
+            <div class="bg-green-100 border border-green-400 text-green-700 px-6 py-4 rounded-xl mb-6 shadow-lg">
+                <div class="flex items-center">
+                    <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                    </svg>
+                    {{ success }}
+                </div>
+            </div>
+        {% endif %}
+        <form method="POST" action="{% url 'create_sentence_level' %}" enctype="multipart/form-data" class="space-y-6">
+            {% csrf_token %}
+                <div class="bg-white rounded-xl p-6 border border-blue-200">
+                    <h3 class="text-lg font-semibold text-blue-800 mb-4 flex items-center">
+                        <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z"/>
+                        </svg>
+                        Path & Lesson Assignment
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label for="path_id" class="block text-sm font-medium text-gray-700 mb-2">Select Path</label>
+                            <select class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200" id="path_id" name="path_id">
+                                <option value="">Choose a path...</option>
+                                {% for path in path_ids %}
+                                    <option value="{{ path.id }}">{{ path.title }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div>
+                            <label for="lesson_id" class="block text-sm font-medium text-gray-700 mb-2">Select Lesson *</label>
+                            <select class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200" id="lesson_id" name="lesson_id" required>
+                                <option value="">Choose a lesson...</option>
+                                {% for lesson in lesson_ids %}
+                                    <option value="{{ lesson.id }}">{{ lesson.title }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Title</label>
+                <input type="text" name="title" required
+                    class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-200 outline-none"
+                    placeholder="Conversation: At a Restaurant">
+            </div>
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Grammar Point</label>
+                <input type="text" name="grammar_point" required
+                    class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-200 outline-none"
+                    placeholder="Verb Masu-form">
+            </div>
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Forms</label>
+                <div id="forms-container" class="space-y-2">
+                    <input type="text" name="form_0" required class="w-full px-4 py-2 border-2 border-gray-200 rounded-lg" placeholder="〜ます/〜ません/〜ました">
+                    {% comment %} <input type="text" name="form_1" class="w-full px-4 py-2 border-2 border-gray-200 rounded-lg" placeholder="〜ません">
+                    <input type="text" name="form_2" class="w-full px-4 py-2 border-2 border-gray-200 rounded-lg" placeholder="〜ました">
+                    <input type="text" name="form_3" class="w-full px-4 py-2 border-2 border-gray-200 rounded-lg" placeholder="〜ませんでした"> {% endcomment %}
+                </div>
+                <button type="button" id="add-form" class="mt-2 bg-blue-100 text-blue-700 px-3 py-1 rounded-lg hover:bg-blue-200 transition-colors font-semibold text-sm">
+                    + Add Form
+                </button>
+            </div>
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Example for</label>
+                <input type="text" name="example_for" required
+                    class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl"
+                    placeholder="〜ます。">
+            </div>
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Sentence (Japanese)</label>
+                <input type="text" name="sentence_japanese" required
+                    class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl"
+                    placeholder="すみません、メニューをみせてください。">
+            </div>
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Sentence (Romaji)</label>
+                <input type="text" name="sentence_romaji" required
+                    class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl"
+                    placeholder="Sumimasen, menyuu o misete kudasai.">
+            </div>
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Example Sentence (English)</label>
+                <input type="text" name="sentence_english" required
+                    class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl"
+                    placeholder="Excuse me, please show me the menu.">
+            </div>
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Example Sentence (Nepali)</label>
+                <input type="text" name="sentence_nepali" required
+                    class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl"
+                    placeholder="कृपया मेन्यु देखाइदिनुहोस्">
+            </div>
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Image</label>
+                <input type="file" name="image_file" accept="image/*"
+                    class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl">
+            </div>
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Audio</label>
+                <input type="file" name="audio_file" accept="audio/*"
+                    class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl">
+            </div>
+            <button type="submit"
+                class="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white font-bold py-4 px-6 rounded-xl hover:from-blue-600 hover:to-purple-700 transform hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl">
+                Create Sentence
+            </button>
+        </form>
+    </div>
+</div>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const formsContainer = document.getElementById('forms-container');
+    const addFormBtn = document.getElementById('add-form');
+    addFormBtn.addEventListener('click', function() {
+        const idx = formsContainer.querySelectorAll('input[type="text"]').length;
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.name = `form_${idx}`;
+        input.className = 'w-full px-4 py-2 border-2 border-gray-200 rounded-lg mt-1';
+        input.placeholder = `Form ${idx + 1}`;
+        formsContainer.appendChild(input);
+    });
+});
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const pathSelect = document.getElementById('path_id');
+    const lessonSelect = document.getElementById('lesson_id');
+
+    pathSelect.addEventListener('change', function() {
+        const pathId = this.value;
+        // Clear current lessons
+        lessonSelect.innerHTML = '<option value="" disabled selected>Loading...</option>';
+        fetch(`/get_lesson/${pathId}/`)
+            .then(response => response.json())
+            .then(data => {
+                lessonSelect.innerHTML = '<option value="" disabled selected>Select a lesson</option>';
+                if (data.lessons && data.lessons.length > 0) {
+                    data.lessons.forEach(lesson => {
+                        const option = document.createElement('option');
+                        option.value = lesson.id;
+                        option.textContent = lesson.lesson_title || lesson.id;
+                        lessonSelect.appendChild(option);
+                    });
+                } else {
+                    lessonSelect.innerHTML = '<option value="" disabled selected>No lessons found</option>';
+                }
+            })
+            .catch(() => {
+                lessonSelect.innerHTML = '<option value="" disabled selected>Error loading lessons</option>';
+            });
+    });
+});
+</script>
+{% endblock content %}
