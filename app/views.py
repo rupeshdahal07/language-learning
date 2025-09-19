@@ -1502,7 +1502,7 @@ def create_rearrange(request):
         random.shuffle(japanese_words)
 
         # Validate required fields
-        if not all([answer_romaji, answer_english, answer_japanese]) or not romaji_words or not japanese_words:
+        if not all([answer_romaji, answer_english, answer_japanese])  or not japanese_words:
             return render(request, 'rearrange.html', {
                 'error': 'All fields are required.',
                 'path_ids': path_ids,
