@@ -2078,7 +2078,7 @@ def create_combined_words(request):
         lesson_id = request.POST.get('lesson_id')
 
         # Validation
-        if not all([title, letter_info_title, letter_info_meaning, combined_nepali_words, 
+        if not all([letter_info_title, letter_info_meaning, combined_nepali_words, 
                    combined_japanese_words, romaji, english, japanese_meaning]) or \
            len(nepali_letters) < 2 or len(japanese_letters) < 2:
             return render(request, 'combined_words.html', {
