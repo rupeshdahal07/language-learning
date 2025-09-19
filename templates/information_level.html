@@ -46,6 +46,7 @@
                 <div class="bg-gray-50 rounded-xl p-6 space-y-4">
                     <h3 class="text-lg font-semibold text-gray-800 mb-4">Letter Information</h3>
                     
+                    
                     <div>
                         <label for="letterTitle" class="block text-sm font-semibold text-gray-700 mb-2">
                             Letter Title
@@ -60,7 +61,20 @@
                             placeholder="Enter letter title"
                         >
                     </div>
-
+                    <div>
+                        <label for="kanji" class="block text-sm font-semibold text-gray-700 mb-2">
+                            Kanji
+                        </label>
+                        <input 
+                            type="text" 
+                            id="kanji" 
+                            name="kanji" 
+                            required
+                            value=""
+                            class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-200 outline-none"
+                            placeholder="Enter letter title"
+                        >
+                    </div>
                     <div>
                         <label for="letterMeaning" class="block text-sm font-semibold text-gray-700 mb-2">
                             Meaning (if nepali_letter wrap it with <>)

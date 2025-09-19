@@ -960,8 +960,59 @@ class CheckStreak(APIView):
 
 
 
+class Notification(APIView):
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        """Get user profile and progress data"""
+        try:
+            # Get user_id from query params for GET request
+            user_id = request.query_params.get("user_id")
+            
+            # Validate input
+            if not user_id:
+                return Response(
+                    {"error": "User ID is required"},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Validate user_id format (assuming UUID)
+            try:
+                import uuid
+                uuid.UUID(user_id)
+            except ValueError:
+                return Response(
+                    {"error": "Invalid user ID format"},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Get JWT token and create authenticated Supabase client
+            jwt_token = request.auth
+            if not jwt_token:
+                return Response(
+                    {"error": "Authentication token required"},
+                    status=status.HTTP_401_UNAUTHORIZED
+                )
+            
+            supabase_client = get_user_supabase(jwt_token)
+            # Query user progress with error handling
+            response = supabase.table('user_notifications')\
+                .select('*, notifications!inner(*)')\
+                .eq('user_id', user_id)\
+                .execute()
 
-
+            return Response(response.data, status=status.HTTP_200_OK)
+        
+        except Exception as e:
+            # Log the error for debugging
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Error fetching user notification for user_id {user_id}: {str(e)}")
+            
+            return Response(
+                {"error": "Internal server error occurred"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 
             

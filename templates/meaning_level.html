@@ -69,16 +69,17 @@
                 <label class="block text-sm font-semibold mb-2">Usage</label>
                 <textarea name="usage" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500" placeholder="How is it used?"></textarea>
             </div>
-            <div>
-                <label class="block text-sm font-semibold mb-2">Examples</label>
-                <div id="examplesContainer" class="space-y-2">
-                    <div class="flex space-x-2">
-                        <input type="text" name="examples" class="flex-1 px-4 py-2 border-2 border-gray-200 rounded-lg" placeholder="Example sentence">
-                        <button type="button" class="remove-example hidden text-red-500 hover:text-red-700 text-xl font-bold">&times;</button>
+                <div>
+                    <label class="block text-sm font-semibold mb-2">Examples</label>
+                    <div id="examplesContainer" class="space-y-2">
+                        <div class="flex space-x-2">
+                            <input type="text" name="examples_nepali_1" class="flex-1 px-4 py-2 border-2 border-gray-200 rounded-lg" placeholder="Example in Nepali">
+                            <input type="text" name="examples_english_1" class="flex-1 px-4 py-2 border-2 border-gray-200 rounded-lg" placeholder="Example in English">
+                            <button type="button" class="remove-example hidden text-red-500 hover:text-red-700 text-xl font-bold">&times;</button>
+                        </div>
                     </div>
+                    <button type="button" id="addExampleBtn" class="mt-2 px-4 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition">+ Add Example</button>
                 </div>
-                <button type="button" id="addExampleBtn" class="mt-2 px-4 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition">+ Add Example</button>
-            </div>
             <div>
                 <label class="block text-sm font-semibold mb-2">Tips</label>
                 <textarea name="tips" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500" placeholder="Tips (optional)"></textarea>
@@ -97,11 +98,16 @@ document.addEventListener('DOMContentLoaded', function() {
             btn.classList.toggle('hidden', exampleDivs.length <= 1);
         });
     }
+    function getExampleCount() {
+        return container.querySelectorAll('.flex').length;
+    }
     addBtn.addEventListener('click', function() {
+        const count = getExampleCount() + 1;
         const div = document.createElement('div');
         div.className = 'flex space-x-2';
         div.innerHTML = `
-            <input type="text" name="examples" class="flex-1 px-4 py-2 border-2 border-gray-200 rounded-lg" placeholder="Example sentence">
+            <input type="text" name="examples_nepali_${count}" class="flex-1 px-4 py-2 border-2 border-gray-200 rounded-lg" placeholder="Example in Nepali">
+            <input type="text" name="examples_english_${count}" class="flex-1 px-4 py-2 border-2 border-gray-200 rounded-lg" placeholder="Example in English">
             <button type="button" class="remove-example text-red-500 hover:text-red-700 text-xl font-bold">&times;</button>
         `;
         container.appendChild(div);

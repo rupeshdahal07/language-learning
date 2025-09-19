@@ -857,14 +857,14 @@ def create_word_from_level(request):
         # 1. Upload audio file to Supabase Storage
         audio_url = ''
         if audio_file:
-            file_name = f"audio/{audio_file.name}"  # folder 'audio/' inside bucket
+            file_name = f"word-form-audio/{audio_file.name}"  # folder 'audio/' inside bucket
             try:
-                res = supabase.storage.from_("audio").upload(file_name, audio_file.read())
+                res = supabase.storage.from_("word-form-audio").upload(file_name, audio_file.read())
             except Exception as e:
                 return render(request, 'word_form.html', {'error': f'Upload failed: {str(e)}'})
 
             # 2. Build public URL (no signed URL needed)
-            audio_url = f"/storage/v1/object/public/audio/{file_name}"
+            audio_url = f"/storage/v1/object/public/word-form-audio/{file_name}"
 
         image_url = None
         if image_file:
@@ -1116,14 +1116,14 @@ def create_letters(request):
          # 1. Upload audio file to Supabase Storage
         audio_url = None
         if audio_file:
-            file_name = f"audio/{audio_file.name}"  # folder 'audio/' inside bucket
+            file_name = f"letter-audio/{audio_file.name}"  # folder 'audio/' inside bucket
             try:
-                res = supabase.storage.from_("audio").upload(file_name, audio_file.read())
+                res = supabase.storage.from_("letter-audio").upload(file_name, audio_file.read())
             except Exception as e:
                 return render(request, 'word_form.html', {'error': f'Upload failed: {str(e)}'})
 
             # 2. Build public URL (no signed URL needed)
-            audio_url = f"/storage/v1/object/public/audio/{file_name}"
+            audio_url = f"/storage/v1/object/public/letter-audio/{file_name}"
 
         data = [{
             'collection_id': letter_collection,
@@ -1263,6 +1263,7 @@ def information_level(request):
         Onyomi = request.POST.get('topic_0')
         Kunyomi = request.POST.get('topic_1')
         image_file = request.FILES.get('image')
+        kanji = request.FILES.get('kanji')
 
         path_id = request.POST.get('path_id')
         lesson_id = request.POST.get('lesson_id')
@@ -1294,9 +1295,10 @@ def information_level(request):
             image_url = f"/storage/v1/object/public/images/{file_name}"
 
         data = [{
-            "letter_info": {"title": title, "topics":[Onyomi, Kunyomi], "meaning": meaning},
+            "letter_info": {"title": kanji, "topics":[Onyomi, Kunyomi], "meaning": meaning},
             "use_cases": use_cases,
-            "image_url": image_url
+            "image_url": image_url,
+            "title": title
         }]
 
         print(data)
@@ -1399,9 +1401,18 @@ def create_meaning_level(request):
         meaning = request.POST.get('meaning')
         structure = request.POST.get('structure')
         usage = request.POST.get('usage')
-        examples = request.POST.getlist('examples')
+        examples = []
+        index = 1
+        while True:
+            nepali = request.POST.get(f'examples_nepali_{index}')
+            english = request.POST.get(f'examples_english_{index}')
+            if nepali is None and english is None:
+                break
+            if (nepali and nepali.strip()) or (english and english.strip()):
+                examples.append({'nepali': nepali or '', 'english': english or ''})
+            index += 1
+        
         tips = request.POST.get('tips')
-
         path_id = request.POST.get('path_id')
         lesson_id = request.POST.get('lesson_id')
 
@@ -1737,6 +1748,7 @@ def edit_word_form(request, word_form_id):
         
         if request.method == 'POST':
             audio_file = request.FILES.get('audioFile')
+            image_file = request.FILES.get('imageFile')
             nepali_sound = request.POST.get('sound')
 
             if nepali_sound:
@@ -1763,10 +1775,19 @@ def edit_word_form(request, word_form_id):
             # Handle audio upload
             audio_url = word_form.get('audioUrl')  # Keep existing audio if no new one
             if audio_file:
-                file_name = f"audio/{audio_file.name}"
+                file_name = f"word-form-audio/{audio_file.name}"
                 try:
-                    supabase.storage.from_("audio").upload(file_name, audio_file.read())
-                    audio_url = f"/storage/v1/object/public/audio/{file_name}"
+                    supabase.storage.from_("word-form-audio").upload(file_name, audio_file.read())
+                    audio_url = f"/storage/v1/object/public/word-form-audio/{file_name}"
+                except Exception as e:
+                    return render(request, 'word_form.html', {'error': f'Upload failed: {str(e)}'})
+                
+            image_url = word_form.get('imageUrl')  # Keep existing image if no new one
+            if image_file:
+                file_name = f"images/{image_file.name}"
+                try:
+                    supabase.storage.from_("images").upload(file_name, image_file.read())
+                    image_url = f"/storage/v1/object/public/images/{file_name}"
                 except Exception as e:
                     return render(request, 'word_form.html', {'error': f'Upload failed: {str(e)}'})
 
