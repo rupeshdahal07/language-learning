@@ -711,18 +711,7 @@ def create_fill_blank(request):
         ):
             return render(request, 'fill_blank.html', {'error': 'All fields are required.'})
         
-        # if not audio_file or not options:
-        #     return render(request, 'word_form.html', {'error': 'All fields are required.'})
 
-        # # 1. Upload audio file to Supabase Storage
-        # file_name = f"audio/{audio_file.name}"  # folder 'audio/' inside bucket
-        # try:
-        #     res = supabase.storage.from_("audio").upload(file_name, audio_file.read())
-        # except Exception as e:
-        #     return render(request, 'word_form.html', {'error': f'Upload failed: {str(e)}'})
-
-        # # 2. Build public URL (no signed URL needed)
-        # audio_url = f"http://64.227.141.251:8000/storage/v1/object/public/audio/{file_name}"
 
         # ------uploading the image to supabase bucket
         image_url = None

@@ -38,8 +38,11 @@ class UserPathProgressView(APIView):
                 response = query.single().execute()
                 print(f'user_path_progress: {response.data}')
                 return Response(response.data)
+            
             else:
                 response = query.execute()
+                if not response.data:
+                    return Response([], status=status.HTTP_200_OK)
                 return Response(response.data)
                 
         except Exception as e:
