@@ -1263,6 +1263,7 @@ def information_level(request):
         Onyomi = request.POST.get('topic_0')
         Kunyomi = request.POST.get('topic_1')
         image_file = request.FILES.get('image')
+        audio_file = request.FILES.get('audio')
         kanji = request.FILES.get('kanji')
 
         path_id = request.POST.get('path_id')
@@ -1293,12 +1294,26 @@ def information_level(request):
 
             # # 2. Build public URL (no signed URL needed)
             image_url = f"/storage/v1/object/public/images/{file_name}"
+        
+        audio_url = None
+        if audio_file:
+            file_name = f"information-level-audio/{audio_file.name}"
+            try:
+                supabase.storage.from_("information-level-audio").upload(file_name, audio_file.read())
+                audio_url = f"/storage/v1/object/public/information-level-audio/{file_name}"
+            except Exception as e:
+                return render(request, 'information_level.html', {
+                    'error': f'Audio upload failed: {str(e)}',
+                    'path_ids': path_ids,
+                    'lesson_ids': lesson_ids
+                })
 
         data = [{
             "letter_info": {"title": kanji, "topics":[Onyomi, Kunyomi], "meaning": meaning},
             "use_cases": use_cases,
             "image_url": image_url,
-            "title": title
+            "title": title,
+            "audio_url": audio_url
         }]
 
         print(data)
@@ -1404,12 +1419,12 @@ def create_meaning_level(request):
         examples = []
         index = 1
         while True:
-            nepali = request.POST.get(f'examples_nepali_{index}')
+            japanese = request.POST.get(f'examples_japanese_{index}')
             english = request.POST.get(f'examples_english_{index}')
-            if nepali is None and english is None:
+            if japanese is None and english is None:
                 break
-            if (nepali and nepali.strip()) or (english and english.strip()):
-                examples.append({'nepali': nepali or '', 'english': english or ''})
+            if (japanese and japanese.strip()) or (english and english.strip()):
+                examples.append({'japanese': japanese or '', 'english': english or ''})
             index += 1
         
         tips = request.POST.get('tips')
