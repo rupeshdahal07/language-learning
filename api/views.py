@@ -42,7 +42,7 @@ class UserPathProgressView(APIView):
             else:
                 response = query.execute()
                 if not response.data:
-                    return Response([], status=status.HTTP_200_OK)
+                    return Response({}, status=status.HTTP_200_OK)
                 return Response(response.data)
                 
         except Exception as e:
@@ -159,6 +159,8 @@ class UserLessonProgressView(APIView):
                 query = query.is_("path_id", None)
 
             response = query.execute()
+            if not response.data:
+                return Response([], status=status.HTTP_200_OK)
             return Response(response.data)
                 
         except Exception as e:
