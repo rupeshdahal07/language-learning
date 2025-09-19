@@ -997,10 +997,9 @@ class Notification(APIView):
             supabase_client = get_user_supabase(jwt_token)
             # Query user progress with error handling
             response = supabase.table('user_notifications')\
-                .select('*, notifications!inner(*)')\
+                .select('*')\
                 .eq('user_id', user_id)\
                 .execute()
-
             return Response(response.data, status=status.HTTP_200_OK)
         
         except Exception as e:
