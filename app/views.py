@@ -1886,8 +1886,8 @@ def edit_letter(request, letter_id):
             if audio_file:
                 file_name = f"audio/{audio_file.name}"
                 try:
-                    supabase.storage.from_("audio").upload(file_name, audio_file.read())
-                    audio_url = f"/storage/v1/object/public/audio/{file_name}"
+                    supabase.storage.from_("letter-audio").upload(file_name, audio_file.read())
+                    audio_url = f"/storage/v1/object/public/letter-audio/{file_name}"
                 except Exception as e:
                     return render(request, 'letters_tracing.html', {'error': f'Upload failed: {str(e)}'})
 
@@ -2029,7 +2029,7 @@ def create_combined_words(request):
         title = request.POST.get('title')
         letter_info_title = request.POST.get('letter_info_title')
         letter_info_meaning = request.POST.get('letter_info_meaning')
-        letter_info_meaning = re.sub(r"<(.*?)>", r'<font="Preeti font  SDF">\1</font>', letter_info_meaning())
+        letter_info_meaning = re.sub(r"<(.*?)>", r'<font="Preeti font  SDF">\1</font>', letter_info_meaning)
         
         # Collect individual letters/words dynamically
         nepali_letters = []
