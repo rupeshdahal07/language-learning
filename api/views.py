@@ -44,7 +44,7 @@ class UserPathProgressView(APIView):
                 response = query.execute()
                 if not response.data:
                     return Response({}, status=status.HTTP_200_OK)
-                return Response(response.data)
+                return Response(response.data[0])
                 
         except Exception as e:
             return Response(
@@ -162,7 +162,7 @@ class UserLessonProgressView(APIView):
             response = query.execute()
             if not response.data:
                 return Response({}, status=status.HTTP_200_OK)
-            return Response(response.data)
+            return Response(response.data[0])
                 
         except Exception as e:
             return Response(
